@@ -26,6 +26,10 @@ mydiscopullsecret: "{{ lookup('file', '~/pull-secret-disco.json') }}"
 kubeadmin_pass: "{{ lookup('file', '~/.kubeadminpass') }}"
 disconnected: true
 ipsec_enabled: false
+# To get the registry certs:
+# openssl s_client -connect registry-quay-quay.apps.sno1.local.momolab.io:443 -showcerts | awk '/BEGIN/,/END/{print $0}' | sudo tee ~/quay-certs.pem
+# sudo cp ~/quay-certs.pem /etc/pki/ca-trust/source/anchors/
+# sudo update-ca-trust
 additional_trust_bundles: "{{ lookup('file','~/quay-certs.pem') }}"
 
 ###################### SNO Details ########################
@@ -35,10 +39,10 @@ GENERAL_VERSION: "4.16"
 OCP_VERSION: stable-4.16
   #OCP_VERSION: "4.15.17"
 OCP_ARCH: x86_64
-  #ocp_version: "4.15.3"
-# List of clusters to iterate
+
+# List of clusters to iterate, comment out what you don't need.
 snos:
-  - sno1 # working on this at the moment, if you need more, uncomment, and size accordingly
+  - sno1 
   # - sno2
   # - sno3
 
