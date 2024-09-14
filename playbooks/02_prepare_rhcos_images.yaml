@@ -1,0 +1,64 @@
+# This playbook creates the relevant bootable ISOs for each SNO cluster
+---
+  - name: Prepare individual rhcos-live.iso for each SNO
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars_files:
+      - ../myvars/external_vars.yaml
+
+    tasks:
+ 
+      - name: Copy rhcos-live.iso to each SNO directory
+        ansible.builtin.copy:
+          src: "{{ myworkdir }}/rhcos-live.iso" 
+          dest: "{{ myworkdir }}/{{ item }}/rhcos-live.iso" 
+        loop: "{{ snos }}"
+
+      - name: Run openshift-install --dir={{ myworkdir }}/{{ item }}/ocp create manifests
+        ansible.builtin.shell: |
+          {{ myworkdir }}/openshift-install --dir={{ myworkdir }}/{{ item }}/ocp create manifests
+        loop: "{{ snos }}"
+
+        # https://access.redhat.com/solutions/7052431     
+      - name: Enable IPSec by copying cluster-network-03-config.yml
+        ansible.builtin.template:
+          src: ../templates/cluster-network-03-config.yml.j2
+          dest: "{{ myworkdir }}/{{ item }}/ocp/manifests/cluster-network-03-config.yml"
+          mode: "0644"
+        loop: "{{ snos }}"
+        when: ipsec_enabled
+
+      - name: Template machineconfig for kernel args
+        ansible.builtin.template:
+          src: ../templates/machineconfig-kargs.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/ocp/openshift/99-openshift-machineconfig-kargs.yaml"
+          mode: "0644"
+        loop: "{{ snos }}"
+
+      - name: Run openshift-install --dir={{ myworkdir }}/{{ item }}/ocp create single-node-ignition-config
+        ansible.builtin.shell: |
+          {{ myworkdir }}/openshift-install --dir={{ myworkdir }}/{{ item }}/ocp create single-node-ignition-config
+        loop: "{{ snos }}"
+        
+        # Create Alias as per Step 9 in https://docs.openshift.com/container-platform/4.14/installing/installing_sno/install-sno-installing-sno.html#install-sno-installing-sno-manually
+      - name: Inject ignition info to rhcos-live for each SNO
+        ansible.builtin.shell: |
+           podman run --privileged --pull always --rm \
+               -v /dev:/dev -v /run/udev:/run/udev -v {{ myworkdir }}:/data \
+               -w /data quay.io/coreos/coreos-installer:release \
+                iso ignition embed -fi {{ item }}/ocp/bootstrap-in-place-for-live-iso.ign "{{ item }}/rhcos-live.iso"
+        args:
+          chdir: "{{ myworkdir }}/"
+        loop: "{{ snos }}"
+
+          #      If you don't have DHCP, this might be an option
+          #      - name: Inject networking info to rhcos-live for each SNO
+          #        ansible.builtin.shell: |
+          #           podman run --privileged --pull always --rm \
+          #               -v /dev:/dev -v /run/udev:/run/udev -v {{ myworkdir }}:/data \
+          #               -w /data quay.io/coreos/coreos-installer:release \
+          #               iso kargs modify -a "ip={{ snoclusters[item].ip }}::{{ gateway }}:{{ netmask }}:{{ item }}:{{ vminterface }}:off:{{ dns }}" "{{ item }}/rhcos-live.iso"
+          #        args:
+          #          chdir: "{{ myworkdir }}/"
+          #        loop: "{{ snos }}"

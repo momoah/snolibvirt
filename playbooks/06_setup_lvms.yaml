@@ -1,0 +1,75 @@
+# This playbook builds the VMs for each SNO cluster
+---
+  - name: Build VMs for each SNO cluster
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars_files:
+      - ../myvars/external_vars.yaml
+
+    tasks:
+      - name: Template out lvm operator  
+        ansible.builtin.template:
+          src: ../templates/lvm-base.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/lvm-base.yaml"
+          mode: "0644"
+        with_items: "{{ snos }}"
+  
+      - name: Template out lvm cluster
+        tags:
+          - lvm
+        ansible.builtin.template:
+          src: ../templates/lvm-cluster.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/lvm-cluster.yaml"
+          mode: "0644"
+        with_items: "{{ snos }}"
+  
+  
+      - name: Install LVM operator
+        tags:
+          - lvm
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc apply -f "{{ myworkdir }}/{{ item }}/lvm-base.yaml"
+        with_items: "{{ snos }}"
+        register: lvm
+        until: lvm is not failed
+        retries: 30
+        delay: 5
+
+      - name: Wait for lvm operator to be ready
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc get pods -n openshift-storage |grep lvms-operator
+        with_items: "{{ snos }}"
+        register: lvm_operator
+        until: lvm_operator is not failed
+        retries: 200
+        delay: 50
+
+       
+      - name: Install LVM Cluster
+        tags:
+          - lvm
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc apply -f "{{ myworkdir }}/{{ item }}/lvm-cluster.yaml"
+        register: lvmcluster
+        retries: 100
+        delay: 50
+        until: lvmcluster is not failed
+        with_items: "{{ snos }}"
+
+      - name: Set lvms-vg1 as default storageclass
+        tags:
+          - lvm
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc patch storageclass lvms-vg1 -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
+        with_items: "{{ snos }}"
+ 
+ 

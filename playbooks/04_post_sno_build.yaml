@@ -1,0 +1,38 @@
+# This playbook builds the VMs for each SNO cluster
+---
+  - name: Post configuration for each SNO cluster
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars_files:
+      - ../myvars/external_vars.yaml
+
+    tasks:
+
+      - name: Wait for console to be up
+        ansible.builtin.uri:
+          url: https://console-openshift-console.apps.{{ item }}.{{ domain }}/
+          validate_certs: false
+          follow_redirects: all
+        with_items: "{{ snos }}"
+        register: uri
+        until: uri is not failed
+        retries: 150
+        delay: 50
+ 
+      - name: Install htpasswd auth
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          {{ myworkdir }}/oc create secret generic htpass-secret --from-file=htpasswd={{ myworkdir }}/htpasswd-all -n openshift-config
+          {{ myworkdir }}/oc apply -f {{ myworkdir }}/htpasswd.yaml
+          {{ myworkdir }}/oc adm policy add-cluster-role-to-user cluster-admin admin
+          {{ myworkdir }}/oc adm groups new cluster-admins
+          {{ myworkdir }}/oc adm groups add-users cluster-admins admin
+          {{ myworkdir }}/oc create clusterrolebinding cluster-admin-binding --clusterrole cluster-admin --user admin
+        with_items: "{{ snos }}"
+        register: htpasswd
+        until: htpasswd is not failed
+        retries: 30
+        delay: 20
+

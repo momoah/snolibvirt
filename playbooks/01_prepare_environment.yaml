@@ -1,0 +1,99 @@
+# This playbook downloads all the components that are required to start building SNOs
+---
+  - name: Prepare Environments
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars_files:
+      - ../myvars/external_vars.yaml
+
+    tasks:
+
+      # Might not be a good idea, if you have multiple clusters
+      #      - name: Delete workdir
+      #        ansible.builtin.file:
+      #          path: "{{ myworkdir }}"
+      #          state: absent
+      #        when: delete_workdir
+      #
+      - name: Create workdir
+        ansible.builtin.file:
+          path: "{{ myworkdir }}/{{ item }}/ocp"
+          state: directory
+          mode: '755'
+        loop: "{{ snos }}"
+
+      - name: Populate and copy install-config.yaml.bak (as a backup)
+        ansible.builtin.template:
+          src: ../templates/install-config-sno.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/install-config.yaml.bak"
+        loop: "{{ snos }}"
+
+      - name: Populate and copy install-config.yaml
+        ansible.builtin.template: 
+          src: ../templates/install-config-sno.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/ocp/install-config.yaml"
+        loop: "{{ snos }}"
+
+      - name: Copy htpasswd files
+        ansible.builtin.copy:
+          src: "../files/{{ item }}"
+          dest: "{{ myworkdir }}"
+        with_items:
+          - htpasswd-all
+          - htpasswd.yaml
+
+      - name: Delete disconnected YAML in workdir - to clear any old versions
+        ansible.builtin.file:
+          path: "{{ myworkdir }}/disconnected"
+          state: absent
+        when: disconnected
+
+      - name: Create disconnected YAML in workdir
+        ansible.builtin.file:
+          path: "{{ myworkdir }}/disconnected"
+          state: directory
+          mode: '755'
+        when: disconnected
+
+      - name: Copy disconnected files
+        ansible.builtin.copy:
+          src: "../files/disconnected/{{ GENERAL_VERSION }}/"
+          dest: "{{ myworkdir }}/disconnected/"
+        when: disconnected
+
+
+      - name: Download the {{ OCP_VERSION }} version of oc client to {{ myworkdir }}
+        ansible.builtin.get_url:
+          url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ OCP_VERSION }}/openshift-client-linux.tar.gz"
+          dest: "{{ myworkdir }}/oc.tar.gz" 
+
+      - name: Download the {{ OCP_VERSION }} version of openshift-install to {{ myworkdir }}
+        ansible.builtin.get_url:
+          url: "https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ OCP_VERSION }}/openshift-install-linux.tar.gz"
+          dest: "{{ myworkdir }}/openshift-install-linux.tar.gz"
+
+      - name: Extract the {{ OCP_VERSION }} version of oc client to {{ myworkdir }}
+        ansible.builtin.unarchive:
+          src: "{{ myworkdir }}/oc.tar.gz"
+          dest: "{{ myworkdir }}/"
+
+      - name: Extract the {{ OCP_VERSION }} version of openshift-install to {{ myworkdir }}
+        ansible.builtin.unarchive:
+          src: "{{ myworkdir }}/openshift-install-linux.tar.gz"
+          dest: "{{ myworkdir }}/"
+
+      - name: Capture ISO_URL using shell
+        ansible.builtin.shell: |
+          {{ myworkdir }}/openshift-install coreos print-stream-json | grep location | grep {{ OCP_ARCH }} | grep iso | cut -d\" -f4
+        register: ISO_URL_OUTPUT
+
+      - name: Set RHCOS_ISO_URL variable
+        ansible.builtin.set_fact:
+          RHCOS_ISO_URL: "{{ ISO_URL_OUTPUT.stdout_lines | first }}"
+
+      - name: Download rhcos-live.iso for {{ OCP_ARCH }} and {{ OCP_VERSION }}
+        ansible.builtin.get_url:
+          url: "{{ RHCOS_ISO_URL }}"
+          dest: "{{ myworkdir }}/rhcos-live.iso" 
+          validate_certs: false

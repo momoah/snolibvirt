@@ -1,0 +1,54 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  name: itms-generic-0
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/service-interconnect
+    source: registry.redhat.io/service-interconnect
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/ubi8
+    source: registry.redhat.io/ubi8
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift4
+    source: registry.redhat.io/openshift4
+status: {}
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  name: itms-release-0
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-release-dev
+    source: quay.io/openshift-release-dev
+status: {}
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  name: itms-operator-0
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/kubebuilder
+    source: gcr.io/kubebuilder
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/cockroachdb
+    source: quay.io/cockroachdb
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/crunchydata
+    source: registry.developers.crunchydata.com/crunchydata
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/infinispan
+    source: quay.io/infinispan
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/mariadb-operator
+    source: ghcr.io/mariadb-operator
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/keycloak
+    source: quay.io/keycloak
+status: {}

@@ -1,0 +1,7 @@
+---
+- import_playbook: 01_prepare_environment.yaml
+- import_playbook: 02_prepare_rhcos_images.yaml
+- import_playbook: 03_build_sno_vms.yaml
+- import_playbook: 04_post_sno_build.yaml
+- import_playbook: 05_disconnected.yaml
+- import_playbook: 06_setup_lvms.yaml

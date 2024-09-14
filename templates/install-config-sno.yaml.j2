@@ -1,0 +1,42 @@
+apiVersion: v1
+baseDomain: {{ domain }}
+compute:
+- name: worker
+  replicas: 0 
+controlPlane:
+  name: master
+  replicas: 1 
+metadata:
+  name: {{ item }}
+networking: 
+  clusterNetwork:
+  - cidr: {{ snoclusters[item].clusterNetwork }}
+    hostPrefix: {{ snoclusters[item].hostPrefix }}
+  machineNetwork:
+  - cidr: {{ snoclusters[item].machineNetwork }}
+  networkType: {{ snoclusters[item].networkType }}
+  serviceNetwork:
+  - {{ snoclusters[item].serviceNetwork }}
+platform:
+  none: {}
+bootstrapInPlace:
+  installationDisk: /dev/vda
+#  installationDisk: /dev/disk/by-id/wwn-{{ snoclusters[item].wwn }} # Trying virtio which doesn't support wwn
+{% if disconnected %}
+pullSecret: '{{ mydiscopullsecret | to_json }}'
+{% else %}
+pullSecret: '{{ mypullsecret | to_json }}'
+{% endif %}
+sshKey: '{{ snoclusters[item].sshKey }}'
+{% if disconnected %}
+additionalTrustBundle: |
+{{ additional_trust_bundles | indent (width=2, first=True) }}
+# This mirror can be found in:
+# /data/oc-mirror/workdir/working-dir/cluster-resources/itms-oc-mirror.yaml 
+# after running oc-mirror v2:
+# oc-mirror --v2 -c imageset-config-ocmirrorv2-v4.16.yaml  --workspace file:////data/oc-mirror/workdir/   docker://registry.local.momolab.io:8443/mirror
+imageContentSources:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-release-dev
+    source: quay.io/openshift-release-dev
+{% endif %}

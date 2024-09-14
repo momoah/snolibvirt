@@ -1,0 +1,45 @@
+# This is a custom quay, as a full deployment won't run on my cluster (Single Node OpenShift)
+kind: QuayRegistry
+apiVersion: quay.redhat.com/v1
+metadata:
+  name: registry
+  namespace: quay
+spec:
+  components:
+    - kind: clair
+      managed: true
+      overrides:
+        replicas: 1
+    - kind: postgres
+      managed: true
+    - kind: objectstorage
+      managed: true
+    - kind: redis
+      managed: true
+    - kind: horizontalpodautoscaler
+      managed: false
+    - kind: route
+      managed: true
+    - kind: mirror
+      managed: false
+    - kind: monitoring
+      managed: true
+    - kind: tls
+      managed: true
+    - kind: quay
+      managed: false
+      overrides:
+        resources:
+          limits:
+            cpu: "8"
+            memory: "20Gi"
+          requests:
+            cpu: "8"
+            memory: "20Gi"
+        replicas: 1
+        env:
+        - name: DEBUGLOG
+          value: "true"
+    - kind: clairpostgres
+      managed: true
+

@@ -1,0 +1,24 @@
+# This playbook builds the VMs for each SNO cluster
+---
+  - name: Disconnected configuration for each SNO cluster
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars_files:
+      - ../myvars/external_vars.yaml
+
+    tasks:
+
+      - name: Apply IDMS/ITMS and Catalog Sources if disconnected
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          {{ myworkdir }}/oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/
+        with_items: "{{ snos }}"
+        register: disconnected_result
+        until: disconnected_result is not failed
+        retries: 30
+        delay: 20
+        when: disconnected
+

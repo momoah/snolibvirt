@@ -1,0 +1,106 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: idms-release-0
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-release-dev
+    source: quay.io/openshift-release-dev
+status: {}
+---
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: idms-operator-0
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/lvms4
+    source: registry.redhat.io/lvms4
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhbk
+    source: registry.redhat.io/rhbk
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/sig-storage
+    source: k8s.gcr.io/sig-storage
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/multicluster-engine
+    source: registry.redhat.io/multicluster-engine
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-logging
+    source: registry.redhat.io/openshift-logging
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhel8
+    source: registry.redhat.io/rhel8
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/devworkspace
+    source: registry.redhat.io/devworkspace
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/ubi8
+    source: registry.redhat.io/ubi8
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/multicluster-globalhub
+    source: registry.redhat.io/multicluster-globalhub
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/kubebuilder
+    source: gcr.io/kubebuilder
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift
+    source: quay.io/openshift
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift4
+    source: registry.redhat.io/openshift4
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/service-interconnect
+    source: registry.redhat.io/service-interconnect
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/ansible-automation-platform-24
+    source: registry.redhat.io/ansible-automation-platform-24
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/skupper
+    source: quay.io/skupper
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/quay
+    source: registry.redhat.io/quay
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-community-operators
+    source: quay.io/openshift-community-operators
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/nginx
+    source: quay.io/nginx
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/argoprojlabs
+    source: quay.io/argoprojlabs
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror
+    source: registry.redhat.io
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/nginx
+    source: registry.connect.redhat.com/nginx
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-service-mesh
+    source: registry.redhat.io/openshift-service-mesh
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/jooholee
+    source: quay.io/jooholee
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/prometheus
+    source: quay.io/prometheus
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhel9
+    source: registry.redhat.io/rhel9
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhacm2
+    source: registry.redhat.io/rhacm2
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/odf4
+    source: registry.redhat.io/odf4
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/datagrid
+    source: registry.redhat.io/datagrid
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/community-operator-pipeline-prod
+    source: quay.io/community-operator-pipeline-prod
+status: {}

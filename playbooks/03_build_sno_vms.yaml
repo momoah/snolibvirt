@@ -1,0 +1,74 @@
+# This playbook builds the VMs for each SNO cluster
+---
+  - name: Build VMs for each SNO cluster
+    hosts: localhost
+    connection: local
+    gather_facts: no
+    vars_files:
+      - ../myvars/external_vars.yaml
+
+    tasks:
+ 
+      - name: Create SNO VMs
+        ansible.builtin.command: >-
+          virt-install
+          --name {{ item }}
+          --hvm
+          --virt-type kvm
+          --cdrom {{ myworkdir }}/{{ item }}/rhcos-live.iso
+          --arch {{ OCP_ARCH }}
+          --os-variant rhel8.0
+          --network network="{{ bridged_network_name }}",mac="{{ mac_prefix }}:{{ snoclusters[item].mac_nr }}",model=virtio
+          --vcpus {{ snoclusters[item].vcpus }}
+          --ram {{ snoclusters[item].ram }}
+          --disk pool={{ mypool }},size={{ snoclusters[item].disk }},format=qcow2,bus=virtio,cache={{ snoclusters[item].cache }}
+          --disk pool={{ mypool }},size={{ snoclusters[item].disk2 }},format=qcow2,bus=virtio,cache={{ snoclusters[item].cache2 }}
+          --check disk_size=off
+          --graphics spice,listen=127.0.0.1
+          --noautoconsole
+          --boot menu=on,useserial=on,uefi
+        with_items: "{{ snos }}"
+        retries: 10
+        delay: 10
+        register: vm_creation
+        until: vm_creation is not failed
+        become: true
+
+      - name: Wait for vm to be stopped
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          sudo virsh list --all | grep -w "{{ item }}" | grep -v running
+        register: running
+        retries: 200
+        delay: 10
+        until: running is not failed
+        with_items: "{{ snos }}"
+  
+      - name: Start "{{ item }}"
+        ansible.builtin.command: |
+          sudo virsh start "{{ item }}"
+        with_items: "{{ snos }}"
+  
+      - name: Wait for node to be Ready
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc get nodes | grep "{{ item }}" | grep -v NotReady
+        with_items: "{{ snos }}"
+        register: cluster_info
+        until: cluster_info is not failed
+        retries: 200
+        delay: 20
+  
+      - name: Fetch kubeconfig file
+        ansible.posix.synchronize:
+          mode: pull
+          src: "{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          dest: "~/{{ item }}-kubeconfig"
+        with_items: "{{ snos }}"
+ 
+      - name: Fix permissions
+        ansible.builtin.shell: |
+          chmod 0600 "/home/momo/{{ item }}-kubeconfig"
+        with_items: "{{ snos }}"
+

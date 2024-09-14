@@ -1,0 +1,106 @@
+###################### Libvirt variables #########################
+
+delete_workdir: true
+mypool: "default"
+domain: "local.momolab.io"
+dns: "192.168.1.150"
+bridged_network_name: "bridged-network"
+gateway: "192.168.1.1"
+cidr: "192.168.1.0/24"
+netmask: "255.255.255.0"
+libvirtpooldir: "/var/lib/libvirt/images/"
+bridge_name: "br0"
+bridge_mode: "bridge"
+vminterface: "enp1s0"
+libvirtdiskbus: "virtio" # if sata, disk becomes /dev/sda, and if virtio, disk becomes /dev/vda
+myworkdir: "/ssd/momo/snoworkdir"
+mac_prefix: "52:54:00:00:01"
+
+###################### General variables #######################
+
+mysshuser: "core"
+mysshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+# Referencing this variable (pullSecret) below causes issues because its contents are json and ansible replaces double quotes with single quotes, see https://docs.ansible.com/ansible/latest/playbook_guide/playbooks_advanced_syntax.html#unsafe-or-raw-strings therefore using `to_json` filter when referencing
+mypullsecret: "{{ lookup('file', '~/pull-secret.json') }}" 
+mydiscopullsecret: "{{ lookup('file', '~/pull-secret-disco.json') }}" 
+kubeadmin_pass: "{{ lookup('file', '~/.kubeadminpass') }}"
+disconnected: true
+ipsec_enabled: false
+additional_trust_bundles: "{{ lookup('file','~/quay-certs.pem') }}"
+
+###################### SNO Details ########################
+
+GENERAL_VERSION: "4.16"
+
+OCP_VERSION: stable-4.16
+  #OCP_VERSION: "4.15.17"
+OCP_ARCH: x86_64
+  #ocp_version: "4.15.3"
+# List of clusters to iterate
+snos:
+  - sno1 # working on this at the moment, if you need more, uncomment, and size accordingly
+  # - sno2
+  # - sno3
+
+# Below can be used in combination with {{ snos }} and {{ snoclusters[item].cpus }}
+snoclusters:
+  sno1:
+    ip: 192.168.1.231
+    clusterNetwork: "11.128.0.0/14"
+    hostPrefix: "23"
+    machineNetwork: "{{ cidr }}"
+    machineNetworkSubnet: "{{ netmask }}"
+    networkType: "OVNKubernetes"
+    serviceNetwork: "171.30.0.0/16"
+    wwn: "0x5000c50015ea71aa"
+    dev: /dev/vda
+    dev2: /dev/vdb
+    wwn2: "0x5000c50015ea71ab"
+    cache: unsafe
+    cache2: unsafe
+    mac_nr: 66
+    sshKey: "{{ mysshkey }}"
+    vcpus: 42
+    ram: 229376 #131072
+    disk: 128
+    disk2: 128
+  sno2:
+    ip: 192.168.1.232
+    clusterNetwork: "12.128.0.0/14"
+    hostPrefix: "23"
+    machineNetwork: "{{ cidr }}"
+    machineNetworkSubnet: "{{ netmask }}"
+    networkType: "OVNKubernetes"
+    serviceNetwork: "172.30.0.0/16"
+    wwn: "0x5000c50015ea71bb"
+    wwn2: "0x5000c50015ea71bc"
+    dev: vda
+    dev2: vdb
+    cache: unsafe
+    cache2: unsafe
+    mac_nr: 67
+    sshKey: "{{ mysshkey }}"
+    vcpus: 12
+    ram: 65536 
+    disk: 128
+    disk2: 128
+  sno3:
+    ip: 192.168.1.233
+    clusterNetwork: "13.128.0.0/14"
+    hostPrefix: "23"
+    machineNetwork: "{{ cidr }}"
+    machineNetworkSubnet: "{{ netmask }}"
+    networkType: "OVNKubernetes"
+    serviceNetwork: "173.30.0.0/16"
+    wwn: "0x5000c50015ea71cc"
+    wwn2: "0x5000c50015ea71cd"
+    dev: vda
+    dev2: vdb
+    cache: unsafe
+    cache2: unsafe
+    mac_nr: 68
+    sshKey: "{{ mysshkey }}"
+    vcpus: 12
+    ram: 65536
+    disk: 128
+    disk2: 30
