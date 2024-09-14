@@ -27,7 +27,7 @@ kubeadmin_pass: "{{ lookup('file', '~/.kubeadminpass') }}"
 disconnected: true
 ipsec_enabled: false
 # To get the registry certs:
-# openssl s_client -connect registry-quay-quay.apps.sno1.local.momolab.io:443 -showcerts | awk '/BEGIN/,/END/{print $0}' | sudo tee ~/quay-certs.pem
+# openssl s_client -connect registry.local.momolab.io:8443 -showcerts | awk '/BEGIN/,/END/{print $0}' | sudo tee ~/quay-certs.pem
 # sudo cp ~/quay-certs.pem /etc/pki/ca-trust/source/anchors/
 # sudo update-ca-trust
 additional_trust_bundles: "{{ lookup('file','~/quay-certs.pem') }}"

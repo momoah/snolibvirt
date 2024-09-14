@@ -39,6 +39,7 @@ sudo dnf install python3-bcrypt-3.2.2
 ansible-galaxy collection install -r requirements.yml
 ```
 
+# Registry population for disconnected install using local quay
 oc-mirror version 1:
 ```bash
 oc mirror --config=./imageset-config.yaml docker://registry.local.momolab.io:8443
@@ -47,4 +48,9 @@ oc mirror --config=./imageset-config.yaml docker://registry.local.momolab.io:844
 oc-mirror version 2:
 ```bash
 oc-mirror --v2 -c imageset-config-ocmirrorv2-v4.16.yaml  --loglevel debug   --workspace file:////data/oc-mirror/workdir/   docker://registry.local.momolab.io:8443/mirror 2>&1 | tee oc-mirror-v2-logs-202400904-debug.txt 
+```
+
+# Deploy All
+```bash
+ansible-playbook playbooks/deployall.yaml
 ```
