@@ -1,0 +1,30 @@
+apiVersion: oadp.openshift.io/v1alpha1
+kind: DataProtectionApplication
+metadata:
+  namespace: openshift-adp
+  name: ts-dpa
+spec:
+  configuration:
+    velero:
+      defaultPlugins:
+      - openshift
+      - aws
+      - csi
+  backupLocations:
+    - name: default
+      velero:
+        provider: aws
+        objectStorage:
+          bucket: mys3bucket-f2731aca-f8e6-4e50-844d-e1b8fc135357
+          prefix: velero
+        config:
+          profile: noobaa
+          region: noobaa
+          s3ForcePathStyle: "true"
+          # from oc get route -n openshift-storage s3
+          s3Url: https://s3-openshift-storage.apps.sno1.local.momolab.io  
+        credential:
+          name: mys3bucket
+          key: AWS_ACCESS_KEY_ID
+        default: true
+
