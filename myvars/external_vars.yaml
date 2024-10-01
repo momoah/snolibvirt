@@ -4,11 +4,11 @@ delete_workdir: true
 mypool: "default"
 domain: "local.momolab.io"
 dns: "192.168.1.150"
-bridged_network_name: "bridged-network"
+bridged_network_name: "bridged-network" # Bridge setup using https://major.io/p/creating-a-bridge-for-virtual-machines-using-systemd-networkd/
 gateway: "192.168.1.1"
 cidr: "192.168.1.0/24"
 netmask: "255.255.255.0"
-libvirtpooldir: "/var/lib/libvirt/images/"
+libvirtpooldir: "/var/lib/libvirt/images/" 
 bridge_name: "br0"
 bridge_mode: "bridge"
 vminterface: "enp1s0"
@@ -36,8 +36,8 @@ additional_trust_bundles: "{{ lookup('file','~/quay-certs.pem') }}"
 
 GENERAL_VERSION: "4.16"
 
-OCP_VERSION: stable-4.16
-  #OCP_VERSION: "4.15.17"
+OCP_VERSION: "stable-4.16"
+  #OCP_VERSION: "4.15.6"
 OCP_ARCH: x86_64
 
 # List of clusters to iterate, comment out what you don't need.
