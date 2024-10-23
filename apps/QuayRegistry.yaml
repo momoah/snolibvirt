@@ -44,9 +44,9 @@ spec:
             cpu: "6"
             memory: "10Gi"
         replicas: 1
-        env:
-        - name: DEBUGLOG
-          value: "true"
+          #        env:
+          #        - name: DEBUGLOG
+          #          value: "true"
     - kind: clairpostgres
       managed: true
 

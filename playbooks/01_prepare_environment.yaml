@@ -16,6 +16,10 @@
       #          state: absent
       #        when: delete_workdir
       #
+      # Keep in mind, if you see errors like this in CoreOS:
+      # tls: failed to verify certificate: x509: certificate has expired or is not yet valid: current time
+      # You'll need to cleanup the directory below.
+
       - name: Create workdir
         ansible.builtin.file:
           path: "{{ myworkdir }}/{{ item }}/ocp"
