@@ -1,0 +1,74 @@
+variant: openshift
+version: 4.16.0
+metadata:
+  name: 51-master-local-registry-trust
+  labels:
+    machineconfiguration.openshift.io/role: master
+storage:
+  files:
+  - path: /etc/containers/policy.json
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        {
+            "default": [
+                {
+                    "type": "insecureAcceptAnything"
+                }
+            ],
+            "transports": {
+                "docker": {
+                    "registry.local.momolab.io:8443/mirror/redhat": [
+                        {
+                            "type": "signedBy",
+                            "keyType": "GPGKeys",
+                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
+                            "signedIdentity": 
+                            {
+                                  "type": "remapIdentity",
+                                  "prefix": "registry.local.momolab.io:8443/mirror/redhat",
+                                  "signedPrefix": "registry.redhat.io/redhat"
+                            }
+                        }
+                    ],
+                    "registry.local.momolab.io:8443/mirror/openshift-release-dev": [
+                        {
+                            "type": "signedBy",
+                            "keyType": "GPGKeys",
+                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
+                            "signedIdentity": 
+                            {
+                                  "type": "remapIdentity",
+                                  "prefix": "registry.local.momolab.io:8443/mirror/openshift-release-dev",
+                                  "signedPrefix": "quay.io/openshift-release-dev"
+                            }
+                        }
+                    ]
+                },
+                "docker-daemon": {
+                    "": [
+                        {
+                            "type": "insecureAcceptAnything"
+                        }
+                    ]
+                }
+            }
+        }
+#  - path: /etc/containers/registries.d/default.yaml
+#    mode: 0644
+#    overwrite: true
+#    contents:
+#      inline: |
+#        default-docker:
+#          lookaside: http://registry.local.momolab.io
+  - path: /etc/containers/registries.d/registry.local.momolab.io_8443.yaml
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        docker:
+             registry.local.momolab.io:8443/mirror:
+                 sigstore: http://registry.local.momolab.io
+
+

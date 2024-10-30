@@ -10,11 +10,11 @@
     tasks:
 
       # Might not be a good idea, if you have multiple clusters
-      #      - name: Delete workdir
-      #        ansible.builtin.file:
-      #          path: "{{ myworkdir }}"
-      #          state: absent
-      #        when: delete_workdir
+      - name: Delete workdir
+        ansible.builtin.file:
+          path: "{{ myworkdir }}"
+          state: absent
+        when: delete_workdir
       #
       # Keep in mind, if you see errors like this in CoreOS:
       # tls: failed to verify certificate: x509: certificate has expired or is not yet valid: current time
