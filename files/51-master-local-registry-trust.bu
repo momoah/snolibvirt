@@ -6,6 +6,16 @@ metadata:
     machineconfiguration.openshift.io/role: master
 storage:
   files:
+  - path: /etc/containers/registries.d/registry.redhat.io.yaml
+    contents: 
+      inline: ""  
+    mode: 0644
+
+  - path: /etc/containers/registries.d/registry.access.redhat.com.yaml
+    contents: 
+      inline: ""
+    mode: 0644
+
   - path: /etc/containers/policy.json
     mode: 0644
     overwrite: true
@@ -48,8 +58,5 @@ storage:
     overwrite: true
     contents:
       inline: |
-        docker:
-             registry.local.momolab.io:8443:
-                 sigstore: http://registry.local.momolab.io
-
-
+        default-docker:
+          lookaside: http://registry.local.momolab.io
