@@ -12,64 +12,36 @@ storage:
     contents:
       inline: |
         {
-            "default": [
-                {
-                    "type": "insecureAcceptAnything"
-                }
-            ],
-            "transports": {
-                "docker": {
-                    "registry.access.redhat.com": [
-                        {
-                            "type": "signedBy",
-                            "keyType": "GPGKeys",
-                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
-                            "signedIdentity": {
-                                "type": "remapIdentity",
-                                "prefix": "registry.access.redhat.com",
-                                "signedPrefix": "registry.local.momolab.io:8443/mirror"
-                            }
-                        }
-                    ],
-                    "registry.redhat.io": [
-                        {
-                            "type": "signedBy",
-                            "keyType": "GPGKeys",
-                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
-                            "signedIdentity": {
-                                "type": "remapIdentity",
-                                "prefix": "registry.redhat.io",
-                                "signedPrefix": "registry.local.momolab.io:8443/mirror"
-                            }
-                        }
-                    ],
-                    "quay.io/openshift-release-dev": [
-                        {
-                            "type": "signedBy",
-                            "keyType": "GPGKeys",
-                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
-                            "signedIdentity": {
-                                "type": "remapIdentity",
-                                "prefix": "quay.io",
-                                "signedPrefix": "registry.local.momolab.io:8443/mirror/openshift-release-dev"
-                            }
-                        }
-                    ],
-                    "quay.io/openshift-release-dev/ocp-v4.0-art-dev": [
-                        {
-                            "type": "insecureAcceptAnything"
-                        }
-                    ]
-        
-                },
-                "docker-daemon": {
-                    "": [
-                        {
-                            "type": "insecureAcceptAnything"
-                        }
-                    ]
-                }
-            }
+        	"default": [
+        		{
+        			"type": "insecureAcceptAnything"
+        		}
+        	],
+        	"transports": {
+        		"docker": {
+        			"registry.access.redhat.com": [
+        				{
+        					"type": "signedBy",
+        					"keyType": "GPGKeys",
+        					"keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"]
+        				}
+        			],
+        			"registry.redhat.io": [
+        				{
+        					"type": "signedBy",
+        					"keyType": "GPGKeys",
+        					"keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"]
+        				}
+        			]
+        		},
+        		"docker-daemon": {
+        			"": [
+        				{
+        					"type": "insecureAcceptAnything"
+        				}
+        			]
+        		}
+        	}
         }
   - path: /etc/containers/registries.d/default.yaml
     mode: 0644
