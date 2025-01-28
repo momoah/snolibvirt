@@ -43,7 +43,7 @@ storage:
                             }
                         }
                     ],
-                    "quay.io": [
+                    "quay.io/openshift-release-dev": [
                         {
                             "type": "signedBy",
                             "keyType": "GPGKeys",
@@ -51,10 +51,16 @@ storage:
                             "signedIdentity": {
                                 "type": "remapIdentity",
                                 "prefix": "quay.io",
-                                "signedPrefix": "registry.local.momolab.io:8443/mirror"
+                                "signedPrefix": "registry.local.momolab.io:8443/mirror/openshift-release-dev"
                             }
                         }
+                    ],
+                    "quay.io/openshift-release-dev/ocp-v4.0-art-dev": [
+                        {
+                            "type": "insecureAcceptAnything"
+                        }
                     ]
+        
                 },
                 "docker-daemon": {
                     "": [
@@ -65,7 +71,7 @@ storage:
                 }
             }
         }
-  - path: /etc/containers/registries.d/registry.local.momolab.io.yaml
+  - path: /etc/containers/registries.d/default.yaml
     mode: 0644
     overwrite: true
     contents:
