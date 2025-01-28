@@ -1,0 +1,77 @@
+variant: openshift
+version: 4.16.0
+metadata:
+  name: 51-master-local-registry-trust
+  labels:
+    machineconfiguration.openshift.io/role: master
+storage:
+  files:
+  - path: /etc/containers/policy.json
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        {
+            "default": [
+                {
+                    "type": "insecureAcceptAnything"
+                }
+            ],
+            "transports": {
+                "docker": {
+                    "registry.access.redhat.com": [
+                        {
+                            "type": "signedBy",
+                            "keyType": "GPGKeys",
+                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
+                            "signedIdentity": {
+                                "type": "remapIdentity",
+                                "prefix": "registry.access.redhat.com",
+                                "signedPrefix": "registry.local.momolab.io:8443/mirror"
+                            }
+                        }
+                    ],
+                    "registry.redhat.io": [
+                        {
+                            "type": "signedBy",
+                            "keyType": "GPGKeys",
+                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
+                            "signedIdentity": {
+                                "type": "remapIdentity",
+                                "prefix": "registry.redhat.io",
+                                "signedPrefix": "registry.local.momolab.io:8443/mirror"
+                            }
+                        }
+                    ],
+                    "quay.io": [
+                        {
+                            "type": "signedBy",
+                            "keyType": "GPGKeys",
+                            "keyPaths": ["/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release", "/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-beta"],
+                            "signedIdentity": {
+                                "type": "remapIdentity",
+                                "prefix": "quay.io",
+                                "signedPrefix": "registry.local.momolab.io:8443/mirror"
+                            }
+                        }
+                    ]
+                },
+                "docker-daemon": {
+                    "": [
+                        {
+                            "type": "insecureAcceptAnything"
+                        }
+                    ]
+                }
+            }
+        }
+  - path: /etc/containers/registries.d/registry.local.momolab.io.yaml
+    mode: 0644
+    overwrite: true
+    contents:
+      inline: |
+        docker:
+             registry.local.momolab.io:8443:
+                 sigstore: http://registry.local.momolab.io
+
+
