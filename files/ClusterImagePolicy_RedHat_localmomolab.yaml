@@ -1,0 +1,27 @@
+apiVersion: config.openshift.io/v1
+kind: ClusterImagePolicy
+metadata:
+  name: redhat-disconnected-policy
+spec:
+  repositories:
+    - repository: quay.local.momolab.io:443/mirror/lvms4
+    - repository: quay.local.momolab.io:443/mirror/openshift4
+    - repository: quay.local.momolab.io:443/mirror/openshift-gitops-1
+    - repository: quay.local.momolab.io:443/mirror/openshift/release
+    - repository: quay.local.momolab.io:443/mirror/openshift/release-images
+    - repository: quay.local.momolab.io:443/mirror/quay
+    - repository: quay.local.momolab.io:443/mirror/redhat/redhat-operator-index:v4.18
+    - repository: quay.local.momolab.io:443/mirror/rhacm2
+    - repository: quay.local.momolab.io:443/mirror/rhbk
+    - repository: quay.local.momolab.io:443/mirror/rhel8
+    - repository: quay.local.momolab.io:443/mirror/rhel9
+    - repository: quay.local.momolab.io:443/mirror/rh-sso-7
+    - repository: quay.local.momolab.io:443/mirror/ubi8
+    - repository: quay.local.momolab.io:443/mirror/ubi9
+  trustedSigners:
+    - name: redhat
+      staticKey:
+        keyData:
+          name: redhat-signing-key
+          namespace: openshift-config
+          key: redhat-signing-key.pem

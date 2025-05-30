@@ -1,0 +1,13 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  annotations:
+    createdAt: Thursday, 29-May-25 22:08:12 UTC
+    createdBy: oc-mirror v2
+    oc-mirror_version: v0.2.0-alpha.1-398-gc2b5dab
+  name: cs-redhat-operator-index-v4-18
+  namespace: openshift-marketplace
+spec:
+  image: quay.local.momolab.io:443/mirror/redhat/redhat-operator-index:v4.18
+  sourceType: grpc
+status: {}
