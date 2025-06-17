@@ -44,16 +44,16 @@ for mirror, source in unique_pairs:
                     "policyType": "PublicKey",
                     "publicKey": {
                         "keyData": sigstore_key
-                    },
-                    "signedIdentity": {
-                        "type": "RemapIdentity",
-                        "matchPolicy": "RemapIdentity",
-                        "remapIdentity": {
-                            "prefix": mirror,
-                            "signedPrefix": source
-                        }
                     }
-                }
+                },
+                "signedIdentity": {
+                    "type": "RemapIdentity",
+                    "matchPolicy": "RemapIdentity",
+                    "remapIdentity": {
+                        "prefix": mirror,
+                        "signedPrefix": source
+                    }
+                }    
             }
         }
     }
