@@ -5,11 +5,11 @@ metadata:
     createdAt: Tuesday, 24-Jun-25 11:25:01 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: v0.2.0-alpha.1-398-gc2b5dab
-  name: cc-redhat-operator-index-v4-18
+  name: cc-certified-operator-index-v4-18
 spec:
   priority: 0
   source:
     image:
-      ref: quay.local.momolab.io:443/mirror/redhat/redhat-operator-index:v4.18
+      ref: quay.local.momolab.io:443/mirror/redhat/certified-operator-index:v4.18
     type: Image
 status: {}

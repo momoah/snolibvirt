@@ -1,0 +1,144 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: idms-operator-0
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/service-interconnect
+    source: registry.redhat.io/service-interconnect
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhel8
+    source: registry.redhat.io/rhel8
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/gitlab
+    source: registry.connect.redhat.com/gitlab
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/datagrid
+    source: registry.redhat.io/datagrid
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/prometheus
+    source: quay.io/prometheus
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/lvms4
+    source: registry.redhat.io/lvms4
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhbk
+    source: registry.redhat.io/rhbk
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift
+    source: quay.io/openshift
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator
+    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
+    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/cockroachdb
+    source: registry.connect.redhat.com/cockroachdb
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/skupper
+    source: quay.io/skupper
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-service-mesh-tech-preview
+    source: registry.redhat.io/openshift-service-mesh-tech-preview
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/community-operator-pipeline-prod
+    source: quay.io/community-operator-pipeline-prod
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-community-operators
+    source: quay.io/openshift-community-operators
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/odf4
+    source: registry.redhat.io/odf4
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rh-sso-7
+    source: registry.redhat.io/rh-sso-7
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/quay
+    source: registry.redhat.io/quay
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/gitlab-org/cloud-native
+    source: registry.gitlab.com/gitlab-org/cloud-native
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhel9
+    source: registry.redhat.io/rhel9
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-service-mesh
+    source: registry.redhat.io/openshift-service-mesh
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhacm2
+    source: registry.redhat.io/rhacm2
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/ansible-automation-platform-25
+    source: registry.redhat.io/ansible-automation-platform-25
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift4
+    source: registry.redhat.io/openshift4
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/crunchydata
+    source: registry.connect.redhat.com/crunchydata
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/ubi8
+    source: registry.redhat.io/ubi8
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-gitops-1
+    source: registry.redhat.io/openshift-gitops-1
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/konveyor
+    source: quay.io/konveyor
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/argoprojlabs
+    source: quay.io/argoprojlabs
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/gitlab-org/ci-cd/gitlab-runner-ubi-images
+    source: registry.gitlab.com/gitlab-org/ci-cd/gitlab-runner-ubi-images
+    mirrorSourcePolicy: NeverContactSource
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/rhceph
+    source: registry.redhat.io/rhceph
+    mirrorSourcePolicy: NeverContactSource
+status: {}
+---
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  name: idms-release-0
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-release-dev
+    source: quay.io/openshift-release-dev
+    mirrorSourcePolicy: NeverContactSource
+status: {}

@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: myapp-ci-
+spec:
+  pipelineRef:
+    name: ci-build-and-deploy
+  serviceAccountName: pipeline
+  params:
+    - name: REPO_URL
+      value: https://gitlab.local.momolab.io/momo/mypipeline.git
+    - name: REVISION
+      value: main
+    - name: IMAGE_URL
+      value: image-registry.openshift-image-registry.svc:5000/demo-tekton/myapp:latest
+    - name: DO_DEPLOY
+      value: "true"
+  workspaces:
+    - name: ws
+      persistentVolumeClaim:
+        claimName: tekton-ws
+

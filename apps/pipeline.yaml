@@ -1,0 +1,99 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: ci-build-and-deploy
+spec:
+  params:
+    - name: REPO_URL
+      type: string
+    - name: REVISION
+      type: string
+      default: main
+    - name: IMAGE_URL
+      type: string
+    - name: DO_DEPLOY
+      type: string
+      default: "true"
+  workspaces:
+    - name: ws
+  tasks:
+
+    - name: clone
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: git-cli
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: GIT_SCRIPT
+          value: |
+            set -euxo pipefail
+            git config --global http."https://gitlab.local.momolab.io".sslVerify false
+            cd $(workspaces.source.path)
+            git init
+            git remote add origin $(params.REPO_URL)
+            git fetch --depth=1 origin $(params.REVISION)
+            git checkout FETCH_HEAD
+      workspaces:
+        - name: source
+          workspace: ws
+
+    - name: build
+      runAfter: [clone]
+      taskRef:
+        resolver: cluster
+        params:
+          - name: kind
+            value: task
+          - name: name
+            value: buildah
+          - name: namespace
+            value: openshift-pipelines
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE_URL)
+        - name: CONTEXT
+          value: .
+        - name: DOCKERFILE
+          value: ./Dockerfile
+        - name: TLSVERIFY
+          value: "false"   # set true if your registry has proper TLS chain
+      workspaces:
+        - name: source
+          workspace: ws
+
+    - name: deploy
+      runAfter: [build]
+      params:
+        - name: IMAGE_URL
+          value: $(params.IMAGE_URL)
+      taskSpec:
+        params:
+          - name: IMAGE_URL
+            type: string
+        workspaces:
+          - name: ws
+        steps:
+          - name: oc-apply-and-rollout
+            image: quay.io/openshift/origin-cli:4.14
+            script: |
+              #!/usr/bin/env bash
+              set -euxo pipefail
+              cd $(workspaces.ws.path)
+
+              # Apply your repo's manifests
+              oc apply -f k8s/
+
+              # Point Deployment at the just-pushed image tag
+              oc set image deploy/myapp myapp=$(params.IMAGE_URL) -n $(context.taskRun.namespace)
+
+              # Wait for rollout
+              oc rollout status deploy/myapp -n $(context.taskRun.namespace)
+      workspaces:
+        - name: ws
+          workspace: ws
+

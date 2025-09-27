@@ -5,9 +5,9 @@ metadata:
     createdAt: Tuesday, 24-Jun-25 11:25:01 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: v0.2.0-alpha.1-398-gc2b5dab
-  name: cs-redhat-operator-index-v4-18
+  name: cs-community-operator-index-v4-18
   namespace: openshift-marketplace
 spec:
-  image: quay.local.momolab.io:443/mirror/redhat/redhat-operator-index:v4.18
+  image: quay.local.momolab.io:443/mirror/redhat/community-operator-index:v4.18
   sourceType: grpc
 status: {}

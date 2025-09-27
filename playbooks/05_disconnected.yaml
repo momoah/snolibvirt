@@ -14,7 +14,7 @@
           set -e -o pipefail
           export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
           {{ myworkdir }}/oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
-          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/
+          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/ 
         with_items: "{{ snos }}"
         register: disconnected_result
         until: disconnected_result is not failed

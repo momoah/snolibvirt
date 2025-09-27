@@ -2,19 +2,21 @@
 apiVersion: config.openshift.io/v1
 kind: ImageTagMirrorSet
 metadata:
+  name: itms-release-0
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - registry.local.momolab.io:8443/mirror/openshift-release-dev
+    source: quay.io/openshift-release-dev
+status: {}
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
   name: itms-generic-0
 spec:
   imageTagMirrors:
   - mirrors:
     - registry.local.momolab.io:8443/mirror/ubi8
     source: registry.redhat.io/ubi8
-  - mirrors:
-    - registry.local.momolab.io:8443/mirror/redhat
-    source: registry.redhat.io/redhat
-  - mirrors:
-    - registry.local.momolab.io:8443/mirror/openshift4
-    source: registry.redhat.io/openshift4
-  - mirrors:
-    - registry.local.momolab.io:8443/mirror/rhel8
-    source: registry.redhat.io/rhel8
 status: {}

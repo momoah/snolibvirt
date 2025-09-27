@@ -1,56 +1,24 @@
-# Build SNOs on Libvirt
-Inspired by Michele Baldesari's https://github.com/mbaldessari/kvm-sno.git
+# OpenShift Clients
 
-## DNS Entries
+The OpenShift client `oc` simplifies working with Kubernetes and OpenShift
+clusters, offering a number of advantages over `kubectl` such as easy login,
+kube config file management, and access to developer tools. The `kubectl`
+binary is included alongside for when strict Kubernetes compliance is necessary.
 
-This mainly uses bind/named, the entries uses look like this:
+To learn more about OpenShift, visit [docs.openshift.com](https://docs.openshift.com)
+and select the version of OpenShift you are using.
 
-```bash
-# /var/named/local.momolab.io.db
-; SNO 1
-sno1         IN A       192.168.1.231
-*.apps.sno1       CNAME      sno1
-api.sno1       CNAME      sno1
-api-int.sno1       CNAME      sno1
+## Installing the tools
 
-; SNO 2
-sno2         IN A       192.168.1.232
-*.apps.sno2       CNAME      sno2
-api.sno2       CNAME      sno2
-api-int.sno2       CNAME      sno2
+After extracting this archive, move the `oc` and `kubectl` binaries
+to a location on your PATH such as `/usr/local/bin`. Then run:
 
-; SNO 3
-sno3         IN A       192.168.1.233
-*.apps.sno3       CNAME      sno3
-api.sno3       CNAME      sno3
-api-int.sno3       CNAME      sno3
+    oc login [API_URL]
 
-# /var/named/192.168.1.db
-;PTR Record IP address to HostName
-231      IN  PTR     sno1.local.momolab.io.
-232      IN  PTR     sno2.local.momolab.io.
-233      IN  PTR     sno3.local.momolab.io.
+to start a session against an OpenShift cluster. After login, run `oc` and
+`oc help` to learn more about how to get started with OpenShift.
 
-```
+## License
 
-# Pre-Run
-```bash
-sudo dnf install python3-bcrypt-3.2.2
-ansible-galaxy collection install -r requirements.yml
-```
-
-# Registry population for disconnected install using local quay
-oc-mirror version 1:
-```bash
-oc mirror --config=./imageset-config.yaml docker://registry.local.momolab.io:8443
-```
-
-oc-mirror version 2:
-```bash
-oc-mirror --v2 -c imageset-config-ocmirrorv2-v4.16.yaml  --loglevel debug   --workspace file:////data/oc-mirror/workdir/   docker://registry.local.momolab.io:8443/mirror 2>&1 | tee oc-mirror-v2-logs-202400904-debug.txt 
-```
-
-# Deploy All
-```bash
-ansible-playbook playbooks/deployall.yaml
-```
+OpenShift is licensed under the Apache Public License 2.0. The source code for this
+program is [located on github](https://github.com/openshift/oc).

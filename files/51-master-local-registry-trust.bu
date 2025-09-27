@@ -1,5 +1,5 @@
 variant: openshift
-version: 4.16.0
+version: 4.14.0
 metadata:
   name: 51-master-local-registry-trust
   labels:
@@ -59,4 +59,4 @@ storage:
     contents:
       inline: |
         default-docker:
-          lookaside: http://registry.local.momolab.io
+          lookaside: http://www.local.momolab.io

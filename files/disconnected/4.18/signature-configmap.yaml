@@ -4,7 +4,7 @@ binaryData:
 kind: ConfigMap
 metadata:
   annotations:
-    createdAt: Thursday, 29-May-25 22:08:12 UTC
+    createdAt: Tuesday, 24-Jun-25 11:25:01 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: v0.2.0-alpha.1-398-gc2b5dab
   labels:

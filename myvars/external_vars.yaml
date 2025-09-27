@@ -34,10 +34,10 @@ additional_trust_bundles: "{{ lookup('file','~/quay-certs.pem') }}"
 
 ###################### SNO Details ########################
 
-GENERAL_VERSION: "4.18"
+GENERAL_VERSION: "4.19"
 
   #OCP_VERSION: "stable-4.16"
-OCP_VERSION: "4.18.13"
+OCP_VERSION: "4.19.6"
 OCP_ARCH: x86_64
 
 # List of clusters to iterate, comment out what you don't need.

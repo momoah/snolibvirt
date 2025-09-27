@@ -1,0 +1,6 @@
+# Operator & controllers are healthy
+oc get pods -n openshift-pipelines
+oc get tektonconfig.operator.tekton.dev
+
+
+

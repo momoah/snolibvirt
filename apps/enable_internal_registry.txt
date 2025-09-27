@@ -1,0 +1,31 @@
+cat <<'YAML' | oc apply -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: registry-pvc
+  namespace: openshift-image-registry
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: lvms-vg1
+YAML
+
+oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge -p '
+{
+  "spec": {
+    "managementState": "Managed",
+    "replicas": 1,
+    "rolloutStrategy": "Recreate",
+    "defaultRoute": false,
+    "storage": { "pvc": { "claim": "registry-pvc" } }
+  }
+}'
+
+oc get deploy -n openshift-image-registry 
+
+oc patch configs.imageregistry.operator.openshift.io/cluster \
+  --type=merge -p '{"spec":{"defaultRoute":true}}'
+
+oc get route default-route -n openshift-image-registry

@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stress-test-deployment
+  labels:
+    app: stress-test
+spec:
+  replicas: 30
+  selector:
+    matchLabels:
+      app: stress-test
+  template:
+    metadata:
+      labels:
+        app: stress-test
+    spec:
+      containers:
+      - name: stress-test-container
+        image: registry.local.momolab.io:8443/mirror/ubi8/ubi:latest  # Use a lightweight image like busybox for testing
+        imagePullPolicy: Always
+        command: ["sleep", "3600"]  # Keep the container running for 1 hour
+      restartPolicy: Always
