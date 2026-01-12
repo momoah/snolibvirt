@@ -3,7 +3,7 @@ apiVersion: config.openshift.io/v1
 kind: ImageDigestMirrorSet
 metadata:
   annotations:
-    createdAt: Wednesday, 10-Dec-25 06:31:51 UTC
+    createdAt: Saturday, 13-Dec-25 03:07:23 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.20.0-202510221121.p2.gb51b46d.assembly.stream.el9-b51b46d
   name: idms-release-0
@@ -21,166 +21,169 @@ apiVersion: config.openshift.io/v1
 kind: ImageDigestMirrorSet
 metadata:
   annotations:
-    createdAt: Wednesday, 10-Dec-25 06:31:51 UTC
+    createdAt: Saturday, 13-Dec-25 03:07:23 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.20.0-202510221121.p2.gb51b46d.assembly.stream.el9-b51b46d
   name: idms-operator-0
 spec:
   imageDigestMirrors:
   - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift-pipelines
-    source: registry.redhat.io/openshift-pipelines
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhel9
-    source: registry.redhat.io/rhel9
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/ubi9
-    source: registry.redhat.io/ubi9
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhacm2
-    source: registry.redhat.io/rhacm2
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhoai
-    source: registry.redhat.io/rhoai
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator
-    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/network-observability
-    source: registry.redhat.io/network-observability
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/community-operator-pipeline-prod
-    source: quay.io/community-operator-pipeline-prod
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/source-to-image
-    source: registry.redhat.io/source-to-image
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift-gitops-1
-    source: registry.redhat.io/openshift-gitops-1
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift-logging
-    source: registry.redhat.io/openshift-logging
+    - quay.local.momolab.io:443/mirror/rhel7
+    source: registry.redhat.io/rhel7
   - mirrors:
     - quay.local.momolab.io:443/mirror/ubi8
     source: registry.redhat.io/ubi8
   - mirrors:
-    - quay.local.momolab.io:443/mirror/gitlab
-    source: registry.connect.redhat.com/gitlab
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/ansible-automation-platform
-    source: registry.redhat.io/ansible-automation-platform
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift4
-    source: registry.redhat.io/openshift4
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/quay
-    source: registry.redhat.io/quay
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/gitlab-org/cloud-native
-    source: registry.gitlab.com/gitlab-org/cloud-native
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
-    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/devworkspace
-    source: registry.redhat.io/devworkspace
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/web-terminal
-    source: registry.redhat.io/web-terminal
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift-serverless-1
-    source: registry.redhat.io/openshift-serverless-1
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rh-sso-7
-    source: registry.redhat.io/rh-sso-7
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/redhat-cop
-    source: quay.io/redhat-cop
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/gitlab-org/ci-cd/gitlab-runner-ubi-images
-    source: registry.gitlab.com/gitlab-org/ci-cd/gitlab-runner-ubi-images
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/ubi9
-    source: registry.access.redhat.com/ubi9
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/sig-storage
-    source: registry.k8s.io/sig-storage
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhelai1
-    source: registry.redhat.io/rhelai1
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/brancz
-    source: quay.io/brancz
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/compliance
-    source: registry.redhat.io/compliance
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/ansible-automation-platform-26
-    source: registry.redhat.io/ansible-automation-platform-26
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/migration-toolkit-virtualization
-    source: registry.redhat.io/migration-toolkit-virtualization
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/advanced-cluster-security
-    source: registry.redhat.io/advanced-cluster-security
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift-service-mesh
-    source: registry.redhat.io/openshift-service-mesh
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/oadp
-    source: registry.redhat.io/oadp
+    - quay.local.momolab.io:443/mirror
+    source: registry.redhat.io
   - mirrors:
     - quay.local.momolab.io:443/mirror/rhceph
     source: registry.redhat.io/rhceph
   - mirrors:
-    - quay.local.momolab.io:443/mirror/nutanix
-    source: registry.connect.redhat.com/nutanix
+    - quay.local.momolab.io:443/mirror/ansible-automation-platform-26
+    source: registry.redhat.io/ansible-automation-platform-26
   - mirrors:
-    - quay.local.momolab.io:443/mirror/odf4
-    source: registry.redhat.io/odf4
+    - quay.local.momolab.io:443/mirror/ansible-automation-platform-tech-preview
+    source: registry.redhat.io/ansible-automation-platform-tech-preview
   - mirrors:
-    - quay.local.momolab.io:443/mirror
-    source: registry.redhat.io
+    - quay.local.momolab.io:443/mirror/openshift-gitops-1
+    source: registry.redhat.io/openshift-gitops-1
   - mirrors:
-    - quay.local.momolab.io:443/mirror/openshift-update-service
-    source: registry.redhat.io/openshift-update-service
+    - quay.local.momolab.io:443/mirror/gitlab-org/cloud-native
+    source: registry.gitlab.com/gitlab-org/cloud-native
   - mirrors:
-    - quay.local.momolab.io:443/mirror/cert-manager
-    source: registry.redhat.io/cert-manager
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhel7
-    source: registry.redhat.io/rhel7
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/nginx
-    source: quay.io/nginx
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/cluster-observability-operator
-    source: registry.redhat.io/cluster-observability-operator
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/lvms4
-    source: registry.redhat.io/lvms4
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhem
-    source: registry.redhat.io/rhem
+    - quay.local.momolab.io:443/mirror/openshift-logging
+    source: registry.redhat.io/openshift-logging
   - mirrors:
     - quay.local.momolab.io:443/mirror/rhbk
     source: registry.redhat.io/rhbk
   - mirrors:
-    - quay.local.momolab.io:443/mirror/container-native-virtualization
-    source: registry.redhat.io/container-native-virtualization
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/multicluster-engine
-    source: registry.redhat.io/multicluster-engine
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/nginx
-    source: registry.connect.redhat.com/nginx
+    - quay.local.momolab.io:443/mirror/quay
+    source: registry.redhat.io/quay
   - mirrors:
     - quay.local.momolab.io:443/mirror/rhel8
     source: registry.redhat.io/rhel8
   - mirrors:
-    - quay.local.momolab.io:443/mirror/devspaces
-    source: registry.redhat.io/devspaces
+    - quay.local.momolab.io:443/mirror/rhelai1
+    source: registry.redhat.io/rhelai1
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhacm2
+    source: registry.redhat.io/rhacm2
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/cluster-observability-operator
+    source: registry.redhat.io/cluster-observability-operator
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/sig-storage
+    source: registry.k8s.io/sig-storage
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/network-observability
+    source: registry.redhat.io/network-observability
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/migration-toolkit-virtualization
+    source: registry.redhat.io/migration-toolkit-virtualization
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift-pipelines
+    source: registry.redhat.io/openshift-pipelines
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/source-to-image
+    source: registry.redhat.io/source-to-image
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/nginx
+    source: quay.io/nginx
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/container-native-virtualization
+    source: registry.redhat.io/container-native-virtualization
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift-service-mesh
+    source: registry.redhat.io/openshift-service-mesh
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/nutanix
+    source: registry.connect.redhat.com/nutanix
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/devworkspace
+    source: registry.redhat.io/devworkspace
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/advanced-cluster-security
+    source: registry.redhat.io/advanced-cluster-security
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator
+    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
+    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/web-terminal
+    source: registry.redhat.io/web-terminal
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/nginx
+    source: registry.connect.redhat.com/nginx
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhoai
+    source: registry.redhat.io/rhoai
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/ansible-automation-platform
+    source: registry.redhat.io/ansible-automation-platform
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/community-operator-pipeline-prod
+    source: quay.io/community-operator-pipeline-prod
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab
+    source: registry.connect.redhat.com/gitlab
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/cert-manager
+    source: registry.redhat.io/cert-manager
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/compliance
+    source: registry.redhat.io/compliance
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rh-sso-7
+    source: registry.redhat.io/rh-sso-7
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhel9
+    source: registry.redhat.io/rhel9
   - mirrors:
     - quay.local.momolab.io:443/mirror/rhaiis
     source: registry.redhat.io/rhaiis
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/ubi9
+    source: registry.redhat.io/ubi9
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift-update-service
+    source: registry.redhat.io/openshift-update-service
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/lvms4
+    source: registry.redhat.io/lvms4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/ci-cd/gitlab-runner-ubi-images
+    source: registry.gitlab.com/gitlab-org/ci-cd/gitlab-runner-ubi-images
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhem
+    source: registry.redhat.io/rhem
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/redhat-cop
+    source: quay.io/redhat-cop
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift4
+    source: registry.redhat.io/openshift4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/multicluster-engine
+    source: registry.redhat.io/multicluster-engine
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/odf4
+    source: registry.redhat.io/odf4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/oadp
+    source: registry.redhat.io/oadp
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/brancz
+    source: quay.io/brancz
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/devspaces
+    source: registry.redhat.io/devspaces
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/ubi9
+    source: registry.access.redhat.com/ubi9
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift-serverless-1
+    source: registry.redhat.io/openshift-serverless-1
 status: {}

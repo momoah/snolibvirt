@@ -90,7 +90,7 @@
       - name: Capture ISO_URL using shell
         ansible.builtin.shell: |
           #{{ myworkdir }}/openshift-install coreos print-stream-json | grep location | grep {{ OCP_ARCH }} | grep iso | cut -d\" -f4
-          {{ myworkdir }}/openshift-install coreos print-stream-json | grep location | grep x86_64 | grep iso | jq -r .architectures.x86_64.artifacts.metal.formats.iso.disk.location
+          {{ myworkdir }}/openshift-install coreos print-stream-json | jq -r .architectures.{{ OCP_ARCH }}.artifacts.metal.formats.iso.disk.location
         register: ISO_URL_OUTPUT
 
       - name: Set RHCOS_ISO_URL variable

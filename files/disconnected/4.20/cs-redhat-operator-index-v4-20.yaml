@@ -2,7 +2,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
   annotations:
-    createdAt: Wednesday, 10-Dec-25 06:31:51 UTC
+    createdAt: Saturday, 13-Dec-25 03:07:23 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.20.0-202510221121.p2.gb51b46d.assembly.stream.el9-b51b46d
   name: redhat-operators
