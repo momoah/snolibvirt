@@ -68,6 +68,10 @@ snoclusters:
     ram: 204800 #131072 #204800
     disk: 128
     disk2: 128
+    # Find out how we identified the numbers below via files/amd_gpu_passthrough_fedora_epyc.md
+    gpu_passthrough:
+      - "0000:23:00.0"
+      - "0000:23:00.1"      
   sno2:
     ip: 192.168.1.232
     clusterNetwork: "12.128.0.0/14"
@@ -88,6 +92,7 @@ snoclusters:
     ram: 65536 
     disk: 128
     disk2: 128
+    # no gpu_passthrough key = no passthrough
   sno3:
     ip: 192.168.1.233
     clusterNetwork: "13.128.0.0/14"
@@ -108,3 +113,4 @@ snoclusters:
     ram: 65536
     disk: 128
     disk2: 30
+    # no gpu_passthrough key = no passthrough
