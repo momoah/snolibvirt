@@ -43,8 +43,8 @@ OCP_ARCH: x86_64
 # List of clusters to iterate, comment out what you don't need.
 snos:
   - sno1 
-  # - sno2
-  # - sno3
+    #  - sno2
+    #  - sno3
 
 # Below can be used in combination with {{ snos }} and {{ snoclusters[item].cpus }}
 snoclusters:
@@ -64,8 +64,8 @@ snoclusters:
     cache2: unsafe
     mac_nr: 66
     sshKey: "{{ mysshkey }}"
-    vcpus: 38
-    ram: 204800 #131072
+    vcpus: 40
+    ram: 204800 #131072 #204800
     disk: 128
     disk2: 128
   sno2:
