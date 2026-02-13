@@ -1,0 +1,46 @@
+---
+- name: Create temp XML file for {{ item }} on {{ sno_name }}
+  vars:
+    pci_domain: "0x{{ item | regex_replace('^(\\w+):(\\w+):(\\w+)\\.(\\w+)$', '\\1') }}"
+    pci_bus: "0x{{ item | regex_replace('^(\\w+):(\\w+):(\\w+)\\.(\\w+)$', '\\2') }}"
+    pci_slot: "0x{{ item | regex_replace('^(\\w+):(\\w+):(\\w+)\\.(\\w+)$', '\\3') }}"
+    pci_function: "0x{{ item | regex_replace('^(\\w+):(\\w+):(\\w+)\\.(\\w+)$', '\\4') }}"
+  ansible.builtin.copy:
+    dest: "/tmp/hostdev-{{ item | replace(':', '_') | replace('.', '_') }}.xml"
+    content: |
+      <hostdev mode='subsystem' type='pci' managed='yes'>
+        <source>
+          <address domain='{{ pci_domain }}'
+                   bus='{{ pci_bus }}'
+                   slot='{{ pci_slot }}'
+                   function='{{ pci_function }}'/>
+        </source>
+      </hostdev>
+    mode: '0644'
+  with_items: "{{ snoclusters[sno_name].gpu_passthrough }}"
+
+- name: Attach {{ item }} to {{ sno_name }}
+  ansible.builtin.command: >-
+    virsh attach-device {{ sno_name }} --config
+    --file /tmp/hostdev-{{ item | replace(':', '_') | replace('.', '_') }}.xml
+  with_items: "{{ snoclusters[sno_name].gpu_passthrough }}"
+  become: true
+  register: attach_result
+  failed_when:
+    - attach_result.rc != 0
+    - "'already in the domain configuration' not in attach_result.stderr"
+
+- name: Clean up temp XML files
+  ansible.builtin.file:
+    path: "/tmp/hostdev-{{ item | replace(':', '_') | replace('.', '_') }}.xml"
+    state: absent
+  with_items: "{{ snoclusters[sno_name].gpu_passthrough }}"
+
+- name: Verify hostdev in VM XML for {{ sno_name }}
+  ansible.builtin.command: virsh dumpxml {{ sno_name }} --inactive
+  become: true
+  register: vm_xml
+
+- name: Show attached hostdev devices for {{ sno_name }}
+  ansible.builtin.debug:
+    msg: "{{ vm_xml.stdout | regex_findall('(?s)<hostdev.*?</hostdev>') }}"

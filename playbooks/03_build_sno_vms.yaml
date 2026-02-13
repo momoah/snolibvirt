@@ -27,9 +27,6 @@
           --graphics spice,listen=127.0.0.1
           --noautoconsole
           --boot menu=on,useserial=on,uefi,cdrom
-          {% for dev in snoclusters[item].gpu_passthrough | default([]) %}
-          --host-device {{ dev }}
-          {% endfor %}
         with_items: "{{ snos }}"
         retries: 10
         delay: 10

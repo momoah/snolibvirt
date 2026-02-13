@@ -70,8 +70,10 @@ snoclusters:
     disk2: 128
     # Find out how we identified the numbers below via files/amd_gpu_passthrough_fedora_epyc.md
     gpu_passthrough:
-      - "0000:23:00.0"
-      - "0000:23:00.1"      
+      - "0000:21:00.0"   # Navi 10 XL Upstream PCIe Switch
+      - "0000:22:00.0"   # Navi 10 XL Downstream PCIe Switch
+      - "0000:23:00.0"   # RX 6600 VGA
+      - "0000:23:00.1"   # HDMI/DP Audio
   sno2:
     ip: 192.168.1.232
     clusterNetwork: "12.128.0.0/14"

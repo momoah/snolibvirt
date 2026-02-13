@@ -1,0 +1,19 @@
+# This playbook attaches GPU passthrough devices to SNO VMs
+# Run after 03_build_sno_vms.yaml and before starting the VMs
+# See amd-gpu-passthrough-fedora-epyc.md for host prerequisites
+---
+- name: Attach GPU passthrough devices to SNO VMs
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - ../myvars/external_vars.yaml
+
+  tasks:
+    - name: Attach devices for each SNO VM
+      ansible.builtin.include_tasks: 04_attach_gpu_inner.yaml
+      with_items: "{{ snos }}"
+      loop_control:
+        loop_var: sno_name
+      when: snoclusters[sno_name].gpu_passthrough is defined and
+            snoclusters[sno_name].gpu_passthrough | length > 0
