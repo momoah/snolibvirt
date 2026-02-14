@@ -17,3 +17,15 @@
         loop_var: sno_name
       when: snoclusters[sno_name].gpu_passthrough is defined and
             snoclusters[sno_name].gpu_passthrough | length > 0
+
+      # Virsh destroy sounds alarming, but it just means "power off", needed to allow GPU to take effect.
+    - name: Reboot libvirt domains with GPU passthrough configured
+      ansible.builtin.shell: |
+        virsh -c qemu:///system destroy "{{ sno_name }}"
+        virsh -c qemu:///system start "{{ sno_name }}"
+      with_items: "{{ snos }}"
+      loop_control:
+        loop_var: sno_name
+      when: snoclusters[sno_name].gpu_passthrough is defined and
+            snoclusters[sno_name].gpu_passthrough | length > 0
+      become: true

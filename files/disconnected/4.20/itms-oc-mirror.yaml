@@ -3,7 +3,7 @@ apiVersion: config.openshift.io/v1
 kind: ImageTagMirrorSet
 metadata:
   annotations:
-    createdAt: Tuesday, 10-Feb-26 23:02:56 UTC
+    createdAt: Friday, 13-Feb-26 12:17:08 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.20.0-202510221121.p2.gb51b46d.assembly.stream.el9-b51b46d
   name: itms-release-0
@@ -18,7 +18,7 @@ apiVersion: config.openshift.io/v1
 kind: ImageTagMirrorSet
 metadata:
   annotations:
-    createdAt: Tuesday, 10-Feb-26 23:02:56 UTC
+    createdAt: Friday, 13-Feb-26 12:17:08 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.20.0-202510221121.p2.gb51b46d.assembly.stream.el9-b51b46d
   name: itms-operator-0
@@ -28,38 +28,26 @@ spec:
     - quay.local.momolab.io:443/mirror/openshift4
     source: registry.redhat.io/openshift4
   - mirrors:
-    - quay.local.momolab.io:443/mirror/mariadb-operator
-    source: ghcr.io/mariadb-operator
-  - mirrors:
     - quay.local.momolab.io:443/mirror/rhel9
     source: registry.redhat.io/rhel9
   - mirrors:
     - quay.local.momolab.io:443/mirror
     source: registry.redhat.io
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/mariadb-operator
+    source: ghcr.io/mariadb-operator
 status: {}
 ---
 apiVersion: config.openshift.io/v1
 kind: ImageTagMirrorSet
 metadata:
   annotations:
-    createdAt: Tuesday, 10-Feb-26 23:02:56 UTC
+    createdAt: Friday, 13-Feb-26 12:17:08 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.20.0-202510221121.p2.gb51b46d.assembly.stream.el9-b51b46d
   name: itms-generic-0
 spec:
   imageTagMirrors:
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/container-native-virtualization
-    source: registry.redhat.io/container-native-virtualization
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhel8
-    source: registry.redhat.io/rhel8
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/modh
-    source: quay.io/modh
-  - mirrors:
-    - quay.local.momolab.io:443/mirror/rhel9
-    source: registry.redhat.io/rhel9
   - mirrors:
     - quay.local.momolab.io:443/mirror/ubi9
     source: registry.redhat.io/ubi9
@@ -67,12 +55,24 @@ spec:
     - quay.local.momolab.io:443/mirror/jenkins
     source: docker.io/jenkins
   - mirrors:
+    - quay.local.momolab.io:443/mirror/rhel8
+    source: registry.redhat.io/rhel8
+  - mirrors:
     - quay.local.momolab.io:443/mirror/ubi8
     source: registry.redhat.io/ubi8
   - mirrors:
-    - quay.local.momolab.io:443/mirror/odf4
-    source: registry.redhat.io/odf4
+    - quay.local.momolab.io:443/mirror/rhel9
+    source: registry.redhat.io/rhel9
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/modh
+    source: quay.io/modh
   - mirrors:
     - quay.local.momolab.io:443/mirror/openshift4
     source: registry.redhat.io/openshift4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/container-native-virtualization
+    source: registry.redhat.io/container-native-virtualization
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/odf4
+    source: registry.redhat.io/odf4
 status: {}
