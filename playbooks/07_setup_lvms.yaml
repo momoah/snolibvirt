@@ -72,4 +72,29 @@
           "{{ myworkdir }}"/oc patch storageclass lvms-vg1 -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class": "true"}}}'
         with_items: "{{ snos }}"
  
- 
+      - name: Enable internal image registry with emptyDir storage
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc patch configs.imageregistry.operator.openshift.io cluster --type=merge \
+            -p '{"spec":{"managementState":"Managed","storage":{"emptyDir":{}},"replicas":1}}'
+        with_items: "{{ snos }}"
+
+      - name: Wait for image registry pod to be ready
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc get pods -n openshift-image-registry | grep -E "^image-registry-" | grep "1/1.*Running"
+        with_items: "{{ snos }}"
+        register: registry_ready
+        until: registry_ready is not failed
+        retries: 60
+        delay: 10 
+
+      - name: Allow insecure access to internal image registry
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          "{{ myworkdir }}"/oc patch image.config.openshift.io/cluster --type=merge \
+            -p '{"spec":{"registrySources":{"insecureRegistries":["image-registry.openshift-image-registry.svc:5000"]}}}'
+        with_items: "{{ snos }}"
