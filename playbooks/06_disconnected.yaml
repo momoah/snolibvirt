@@ -1,28 +1,68 @@
-# This playbook builds the VMs for each SNO cluster
+# This playbook applies disconnected configuration to each SNO cluster
 ---
-  - name: Disconnected configuration for each SNO cluster
-    hosts: localhost
-    connection: local
-    gather_facts: no
-    vars_files:
-      - ../myvars/external_vars.yaml
+- name: Disconnected configuration for each SNO cluster
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - ../myvars/external_vars.yaml
+  tasks:
+    - name: Disable default OperatorHub sources
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        {{ myworkdir }}/oc patch OperatorHub cluster --type json \
+          -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
+      with_items: "{{ snos }}"
+      when: disconnected
+      register: operatorhub_patch
+      changed_when: "'no change' not in operatorhub_patch.stdout"
 
-    tasks:
+    - name: Apply ImageDigestMirrorSet and ImageTagMirrorSet
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/idms-oc-mirror.yaml 
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/itms-oc-mirror.yaml 
+      with_items: "{{ snos }}"
+      when: disconnected
+      register: mirror_sets
+      until: mirror_sets is not failed
+      retries: 10
+      delay: 10
 
-      - name: Apply IDMS/ITMS and Catalog Sources if disconnected
-        ansible.builtin.shell: |
-          set -e -o pipefail
-          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-          {{ myworkdir }}/oc patch OperatorHub cluster --type json -p '[{"op": "add", "path": "/spec/disableAllDefaultSources", "value": true}]'
-          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-redhat-operator-index* 
-          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-certified-operator-index* 
-          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-community-operator-index* 
-          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/idms-oc-mirror.yaml 
-          {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/itms-oc-mirror.yaml 
-        with_items: "{{ snos }}"
-        register: disconnected_result
-        until: disconnected_result is not failed
-        retries: 30
-        delay: 20
-        when: disconnected
+    - name: Apply CatalogSources
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-redhat-operator-index*.yaml
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-certified-operator-index*.yaml
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-community-operator-index*.yaml
+      with_items: "{{ snos }}"
+      when: disconnected
+      register: catalogsources
+      until: catalogsources is not failed
+      retries: 10
+      delay: 10
 
+    - name: Wait for CatalogSources to be ready
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        # Check each catalog source reaches READY state
+        for cs in redhat-operators cs-certified-operator-index-v4-20 cs-community-operator-index-v4-20; do
+          STATE=$({{ myworkdir }}/oc get catalogsource $cs -n openshift-marketplace \
+            -o jsonpath='{.status.connectionState.lastObservedState}' 2>/dev/null || echo "MISSING")
+          if [ "$STATE" != "READY" ]; then
+            echo "CatalogSource $cs is $STATE (expected READY)"
+            exit 1
+          fi
+        done
+        echo "All CatalogSources ready"
+      with_items: "{{ snos }}"
+      when: disconnected
+      register: catalogsource_ready
+      until: catalogsource_ready is not failed
+      retries: 60
+      delay: 10
+      changed_when: false

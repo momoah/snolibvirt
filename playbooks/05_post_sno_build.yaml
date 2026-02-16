@@ -36,3 +36,98 @@
         retries: 30
         delay: 20
 
+      - name: Check if SSL certificates are defined for cluster
+        ansible.builtin.set_fact:
+          cluster_has_ssl: "{{ snoclusters[item].ssl_key is defined and snoclusters[item].ssl_chain is defined }}"
+        with_items: "{{ snos }}"
+        register: ssl_check
+      
+      - name: Configure custom ingress certificates
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          
+          # Check if secret already exists and has the same content
+          if {{ myworkdir }}/oc get secret custom-ingress-cert -n openshift-ingress &>/dev/null; then
+            EXISTING_CERT=$({{ myworkdir }}/oc get secret custom-ingress-cert -n openshift-ingress -o jsonpath='{.data.tls\.crt}' | base64 -d)
+            NEW_CERT=$(echo "{{ snoclusters[item].ssl_chain }}")
+            if [ "$EXISTING_CERT" = "$NEW_CERT" ]; then
+              echo "Certificate already up to date"
+              exit 0
+            fi
+          fi
+          
+          # Create or replace the secret with SSL certificates
+          {{ myworkdir }}/oc create secret tls custom-ingress-cert \
+            --cert=<(echo "{{ snoclusters[item].ssl_chain }}") \
+            --key=<(echo "{{ snoclusters[item].ssl_key }}") \
+            -n openshift-ingress \
+            --dry-run=client -o yaml | {{ myworkdir }}/oc apply -f -
+          
+          # Patch the ingresscontroller to use the custom certificate
+          {{ myworkdir }}/oc patch ingresscontroller.operator default \
+            --type=merge \
+            -p '{"spec":{"defaultCertificate":{"name":"custom-ingress-cert"}}}' \
+            -n openshift-ingress-operator
+        args:
+          executable: /bin/bash
+        with_items: "{{ snos }}"
+        when: snoclusters[item].ssl_key is defined and snoclusters[item].ssl_chain is defined
+        register: ingress_cert
+        until: ingress_cert is not failed
+        retries: 10
+        delay: 10
+        changed_when: "'Certificate already up to date' not in ingress_cert.stdout"
+      
+      - name: Configure cluster-wide CA trust bundle
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          
+          # Check if CA bundle already exists and has the same content
+          if {{ myworkdir }}/oc get configmap custom-ca-bundle -n openshift-config &>/dev/null; then
+            EXISTING_CA=$({{ myworkdir }}/oc get configmap custom-ca-bundle -n openshift-config -o jsonpath='{.data.ca-bundle\.crt}')
+            NEW_CA=$(echo "{{ snoclusters[item].ssl_chain }}")
+            if [ "$EXISTING_CA" = "$NEW_CA" ]; then
+              echo "CA bundle already up to date"
+              exit 0
+            fi
+          fi
+          
+          # Create or update the CA bundle ConfigMap
+          {{ myworkdir }}/oc create configmap custom-ca-bundle \
+            --from-literal=ca-bundle.crt="$(echo "{{ snoclusters[item].ssl_chain }}")" \
+            -n openshift-config \
+            --dry-run=client -o yaml | {{ myworkdir }}/oc apply -f -
+          
+          # Patch the cluster proxy to use the custom CA bundle
+          {{ myworkdir }}/oc patch proxy/cluster \
+            --type=merge \
+            -p '{"spec":{"trustedCA":{"name":"custom-ca-bundle"}}}'
+        args:
+          executable: /bin/bash
+        with_items: "{{ snos }}"
+        when: snoclusters[item].ssl_chain is defined
+        register: ca_bundle
+        until: ca_bundle is not failed
+        retries: 10
+        delay: 10
+        changed_when: "'CA bundle already up to date' not in ca_bundle.stdout"
+      
+      - name: Wait for ingress pods to rollout with new certificates
+        ansible.builtin.shell: |
+          set -e -o pipefail
+          export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+          {{ myworkdir }}/oc rollout status deployment/router-default -n openshift-ingress --timeout=300s
+        with_items: "{{ snos }}"
+        when: 
+          - snoclusters[item].ssl_key is defined 
+          - snoclusters[item].ssl_chain is defined
+          - ingress_cert.results[loop.index0] is defined
+          - ingress_cert.results[loop.index0] is changed
+        register: rollout
+        until: rollout is not failed
+        retries: 5
+        delay: 20
+        loop_control:
+          index_var: loop_index0
