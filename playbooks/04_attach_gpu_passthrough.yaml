@@ -1,6 +1,12 @@
 # This playbook attaches GPU passthrough devices to SNO VMs
 # Run after 03_build_sno_vms.yaml and before starting the VMs
 # See amd-gpu-passthrough-fedora-epyc.md for host prerequisites
+# If you get this error when starting the VM:
+# Unknown PCI header type '127'
+# It means the GPU is stuck on the PCI bus from the previous VM session. 
+# The GPU's config space is returning all 0xFF and libvirt can't initialize it.
+# The only way to fix this, is to do a full reboot of the host.
+#
 ---
 - name: Attach GPU passthrough devices to SNO VMs
   hosts: localhost
@@ -18,10 +24,34 @@
       when: snoclusters[sno_name].gpu_passthrough is defined and
             snoclusters[sno_name].gpu_passthrough | length > 0
 
-      # Virsh destroy sounds alarming, but it just means "power off", needed to allow GPU to take effect.
-    - name: Reboot libvirt domains with GPU passthrough configured
+    # Virsh destroy sounds alarming, but it just means "power off", needed to allow GPU to take effect.
+    # We check if the domain is running first — on a re-run it may already be shut off.
+    - name: Check if libvirt domain is running
+      ansible.builtin.shell: |
+        virsh -c qemu:///system domstate "{{ sno_name }}" 2>/dev/null || echo "unknown"
+      with_items: "{{ snos }}"
+      loop_control:
+        loop_var: sno_name
+      when: snoclusters[sno_name].gpu_passthrough is defined and
+            snoclusters[sno_name].gpu_passthrough | length > 0
+      become: true
+      register: domain_state
+      changed_when: false
+
+    - name: Shut down running libvirt domains with GPU passthrough configured
       ansible.builtin.shell: |
         virsh -c qemu:///system destroy "{{ sno_name }}"
+      with_items: "{{ snos }}"
+      loop_control:
+        loop_var: sno_name
+      when:
+        - snoclusters[sno_name].gpu_passthrough is defined
+        - snoclusters[sno_name].gpu_passthrough | length > 0
+        - domain_state.results | selectattr('sno_name', 'equalto', sno_name) | map(attribute='stdout') | first | trim in ['running', 'paused']
+      become: true
+
+    - name: Start libvirt domains with GPU passthrough configured
+      ansible.builtin.shell: |
         virsh -c qemu:///system start "{{ sno_name }}"
       with_items: "{{ snos }}"
       loop_control:

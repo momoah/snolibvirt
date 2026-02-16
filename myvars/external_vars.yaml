@@ -64,7 +64,7 @@ snoclusters:
     cache2: unsafe
     mac_nr: 66
     sshKey: "{{ mysshkey }}"
-    vcpus: 40
+    vcpus: 32
     ram: 204800 #131072 #204800
     disk: 128
     disk2: 128

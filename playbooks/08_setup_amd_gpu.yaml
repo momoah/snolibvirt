@@ -127,7 +127,7 @@
             snoclusters[item].gpu_passthrough | length > 0
       register: mcp_modprobe
       until: mcp_modprobe is not failed
-      retries: 60
+      retries: 80
       delay: 30
       changed_when: false
 

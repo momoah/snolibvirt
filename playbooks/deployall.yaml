@@ -6,4 +6,5 @@
 - import_playbook: 05_post_sno_build.yaml
 - import_playbook: 06_disconnected.yaml
 - import_playbook: 07_setup_lvms.yaml
+- import_playbook: 08_setup_amd_gpu.yaml
 
