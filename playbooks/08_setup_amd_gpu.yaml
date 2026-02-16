@@ -1,0 +1,358 @@
+# This playbook installs the AMD GPU Operator stack on SNO clusters
+# Prerequisites:
+#   - GPU passed through to the VM (playbook 04_attach_gpu_passthrough.yaml)
+#   - LVMS configured and internal image registry enabled (playbook 07_setup_lvms.yaml)
+#   - Node labeled with feature.node.kubernetes.io/pci-1002.present=true (by NFD)
+# Installs:
+#   - Node Feature Discovery (NFD) operator
+#   - Kernel Module Management (KMM) operator
+#   - AMD GPU Operator
+#   - amdgpu.runpm=0 kernel argument (prevents GPU suspend/resume failure)
+#   - amdgpu modprobe parameters (ppfeaturemask=0, noretry=1, gpu_recovery=1)
+---
+- name: Install AMD GPU Operator stack on SNO clusters
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - ../myvars/external_vars.yaml
+  tasks:
+
+    # ── Templates ────────────────────────────────────────────────────────────
+
+    - name: Template out NFD operator manifests
+      ansible.builtin.template:
+        src: ../templates/nfd-base.yaml.j2
+        dest: "{{ myworkdir }}/{{ item }}/nfd-base.yaml"
+        mode: "0644"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+
+    - name: Template out KMM operator manifests
+      ansible.builtin.template:
+        src: ../templates/kmm-base.yaml.j2
+        dest: "{{ myworkdir }}/{{ item }}/kmm-base.yaml"
+        mode: "0644"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+
+    - name: Template out AMD GPU operator manifests
+      ansible.builtin.template:
+        src: ../templates/amd-gpu-base.yaml.j2
+        dest: "{{ myworkdir }}/{{ item }}/amd-gpu-base.yaml"
+        mode: "0644"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+
+    - name: Template out AMD GPU DeviceConfig
+      ansible.builtin.template:
+        src: ../templates/amd-gpu-deviceconfig.yaml.j2
+        dest: "{{ myworkdir }}/{{ item }}/amd-gpu-deviceconfig.yaml"
+        mode: "0644"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+
+    # ── MachineConfigs ───────────────────────────────────────────────────────
+
+    - name: Apply amdgpu modprobe parameters via MachineConfig
+      # Writes /etc/modprobe.d/amdgpu.conf:
+      #   options amdgpu noretry=1 ppfeaturemask=0 gpu_recovery=1
+      # ppfeaturemask=0 disables power features to work around SMU firmware
+      # version mismatch between stock RHEL amdgpu driver and GPU firmware.
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f - << 'EOF'
+        apiVersion: machineconfiguration.openshift.io/v1
+        kind: MachineConfig
+        metadata:
+          labels:
+            machineconfiguration.openshift.io/role: master
+          name: 99-amdgpu-modprobe
+        spec:
+          config:
+            ignition:
+              version: 3.2.0
+            storage:
+              files:
+              - path: /etc/modprobe.d/amdgpu.conf
+                mode: 0644
+                contents:
+                  source: data:text/plain;charset=utf-8;base64,b3B0aW9ucyBhbWRncHUgbm9yZXRyeT0xIHBwZmVhdHVyZW1hc2s9MCBncHVfcmVjb3Zlcnk9MQ==
+        EOF
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: mc_modprobe
+      changed_when: "'configured' in mc_modprobe.stdout or 'created' in mc_modprobe.stdout"
+
+    - name: Apply amdgpu.runpm=0 kernel argument via MachineConfig
+      # Prevents the kernel runtime PM subsystem from suspending the GPU.
+      # The RX 6600 SMU firmware version mismatch causes the resume path to
+      # fail (rlc autoload timeout, gfx_v10_0 resume failed -110), leaving
+      # /dev/dri/renderD129 returning EINVAL until the node is rebooted.
+      # amdgpu.runpm=0 keeps the GPU active at all times.
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f - << 'EOF'
+        apiVersion: machineconfiguration.openshift.io/v1
+        kind: MachineConfig
+        metadata:
+          labels:
+            machineconfiguration.openshift.io/role: master
+          name: 99-amdgpu-norunpm
+        spec:
+          kernelArguments:
+            - amdgpu.runpm=0
+        EOF
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: mc_runpm
+      changed_when: "'configured' in mc_runpm.stdout or 'created' in mc_runpm.stdout"
+
+    - name: Wait for MachineConfigPool to finish applying modprobe + runpm configs
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get mcp master \
+          -o jsonpath='{.status.conditions[?(@.type=="Updated")].status}' | grep -w True
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: mcp_modprobe
+      until: mcp_modprobe is not failed
+      retries: 60
+      delay: 30
+      changed_when: false
+
+    # ── NFD ──────────────────────────────────────────────────────────────────
+
+    - name: Install NFD operator
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f "{{ myworkdir }}/{{ item }}/nfd-base.yaml"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: nfd_install
+      until: nfd_install is not failed
+      retries: 30
+      delay: 10
+      changed_when: "'configured' in nfd_install.stdout or 'created' in nfd_install.stdout"
+
+    - name: Wait for NFD operator to be ready
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get pods -n openshift-nfd | grep nfd-controller-manager | grep "1/1.*Running"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: nfd_ready
+      until: nfd_ready is not failed
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    - name: Create NFD NodeFeatureDiscovery instance
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f - << 'EOF'
+        apiVersion: nfd.openshift.io/v1
+        kind: NodeFeatureDiscovery
+        metadata:
+          name: nfd-instance
+          namespace: openshift-nfd
+        spec:
+          workerConfig:
+            configData: |
+              sources:
+                pci:
+                  deviceClassWhitelist:
+                    - "0300"
+                    - "0302"
+                  deviceLabelFields:
+                    - "vendor"
+          operand:
+            imagePullPolicy: IfNotPresent
+            servicePort: 12000
+        EOF
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: nfd_cr
+      changed_when: "'configured' in nfd_cr.stdout or 'created' in nfd_cr.stdout"
+
+    - name: Wait for NFD to label node with AMD PCI presence
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get node -o json | \
+          python3 -c "import sys,json; labels=json.load(sys.stdin)['items'][0]['metadata']['labels']; \
+          exit(0 if 'feature.node.kubernetes.io/pci-1002.present' in labels else 1)"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: nfd_label
+      until: nfd_label is not failed
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    # ── KMM ──────────────────────────────────────────────────────────────────
+
+    - name: Install KMM operator
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f "{{ myworkdir }}/{{ item }}/kmm-base.yaml"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: kmm_install
+      until: kmm_install is not failed
+      retries: 30
+      delay: 10
+      changed_when: "'configured' in kmm_install.stdout or 'created' in kmm_install.stdout"
+
+    - name: Wait for KMM operator to be ready
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get pods -n openshift-kmm | grep kmm-operator-controller | grep "1/1.*Running"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: kmm_ready
+      until: kmm_ready is not failed
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    # ── AMD GPU Operator ─────────────────────────────────────────────────────
+
+    - name: Install AMD GPU operator
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f "{{ myworkdir }}/{{ item }}/amd-gpu-base.yaml"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: amd_gpu_install
+      until: amd_gpu_install is not failed
+      retries: 30
+      delay: 10
+      changed_when: "'configured' in amd_gpu_install.stdout or 'created' in amd_gpu_install.stdout"
+
+    - name: Wait for AMD GPU operator controller to be ready
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get pods -n openshift-amd-gpu | grep amd-gpu-operator-controller-manager | grep "1/1.*Running"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: amd_gpu_ready
+      until: amd_gpu_ready is not failed
+      retries: 60
+      delay: 10
+      changed_when: false
+
+    - name: Apply AMD GPU DeviceConfig
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f "{{ myworkdir }}/{{ item }}/amd-gpu-deviceconfig.yaml"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: amd_gpu_deviceconfig
+      changed_when: false
+
+    - name: Wait for amdgpu kernel module build to complete
+      # KMM compiles amdgpu-dkms from AMD's repo inside the cluster.
+      # This typically takes 10-30 minutes depending on available CPU.
+      # On re-runs the build may already be complete and cleaned up —
+      # so we also accept the case where no builds exist but the module
+      # image is already present in the internal registry (istag exists).
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        BUILD_PHASE=$("{{ myworkdir }}"/oc get builds -n openshift-amd-gpu \
+          -o jsonpath='{.items[*].status.phase}' 2>/dev/null || echo "")
+        if echo "${BUILD_PHASE}" | grep -qw Succeeded; then
+          echo "build succeeded"
+          exit 0
+        fi
+        if echo "${BUILD_PHASE}" | grep -qw Running; then
+          echo "build still running"
+          exit 1
+        fi
+        # No builds running — check if module image already exists in registry
+        "{{ myworkdir }}"/oc get istag -n openshift-amd-gpu \
+          --no-headers 2>/dev/null | grep amdgpu_kmod | grep -v "^$"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: amd_gpu_build
+      until: amd_gpu_build is not failed
+      retries: 60
+      delay: 30
+      changed_when: false
+
+    - name: Wait for amdgpu module to load on node
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc debug node/{{ item }}.{{ domain }} \
+          -- chroot /host lsmod 2>/dev/null | grep -w amdgpu
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: amdgpu_module
+      until: amdgpu_module is not failed
+      retries: 40
+      delay: 30
+      changed_when: false
+
+    - name: Wait for GPU resource to be available on node
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get node \
+          -o jsonpath='{.items[0].status.capacity.amd\.com/gpu}' | grep -w 1
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: gpu_resource
+      until: gpu_resource is not failed
+      retries: 40
+      delay: 15
+      changed_when: false
+
+    - name: Verify GPU resource is schedulable
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get node \
+          -o jsonpath='{.items[0].status.allocatable.amd\.com/gpu}' | grep -w 1
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      changed_when: false
+
+    - name: Report GPU setup complete
+      ansible.builtin.debug:
+        msg: "AMD GPU setup complete for {{ item }} — amd.com/gpu: 1 is schedulable"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
