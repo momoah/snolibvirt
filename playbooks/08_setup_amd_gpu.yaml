@@ -1,6 +1,7 @@
 # This playbook installs the AMD GPU Operator stack on SNO clusters
 # Prerequisites:
 #   - GPU passed through to the VM (playbook 04_attach_gpu_passthrough.yaml)
+#   - GPU hardware in clean state (host rebooted after GPU passthrough attachment)
 #   - LVMS configured and internal image registry enabled (playbook 07_setup_lvms.yaml)
 #   - Node labeled with feature.node.kubernetes.io/pci-1002.present=true (by NFD)
 # Installs:
@@ -17,6 +18,60 @@
   vars_files:
     - ../myvars/external_vars.yaml
   tasks:
+
+    # ── GPU Health Check ─────────────────────────────────────────────────────
+
+    - name: Check GPU initialization status on node
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc debug node/{{ item }}.{{ domain }} \
+          -- chroot /host dmesg 2>/dev/null | grep -i "amdgpu.*probe.*failed\|Fatal error during GPU init" || echo "GPU_OK"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: gpu_health
+      changed_when: false
+      failed_when: false
+
+    - name: Fail if GPU is in error state
+      ansible.builtin.fail:
+        msg: |
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          GPU INITIALIZATION FAILED - HOST REBOOT REQUIRED
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          
+          The AMD GPU failed to initialize on node {{ item.item }}.
+          
+          Error detected:
+          {{ item.stdout | trim }}
+          
+          This is caused by GPU hardware state not being reset between VM reboots.
+          The GPU's SMU (System Management Unit) is stuck processing a previous
+          command and cannot complete the mode1 reset required for initialization.
+          
+          RESOLUTION:
+          1. Shut down the VM:
+             sudo virsh destroy {{ item.item }}
+          
+          2. Reboot the host to reset GPU hardware state:
+             sudo reboot
+          
+          3. After host comes back up, start the VM:
+             sudo virsh start {{ item.item }}
+          
+          4. Re-run this playbook:
+             ansible-playbook playbooks/08_setup_amd_gpu.yaml
+          
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      when:
+        - snoclusters[item.item].gpu_passthrough is defined
+        - snoclusters[item.item].gpu_passthrough | length > 0
+        - "'GPU_OK' not in item.stdout"
+        - "'probe.*failed' in item.stdout or 'Fatal error' in item.stdout"
+      with_items: "{{ gpu_health.results }}"
+      loop_control:
+        label: "{{ item.item }}"
 
     # ── Templates ────────────────────────────────────────────────────────────
 
@@ -227,7 +282,7 @@
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        "{{ myworkdir }}"/oc get pods -n openshift-kmm | grep kmm-operator-controller | grep "1/1.*Running"
+        "{{ myworkdir }}"/oc get pods -n openshift-operators | grep kmm-operator-controller | grep "1/1.*Running"
       with_items: "{{ snos }}"
       when: snoclusters[item].gpu_passthrough is defined and
             snoclusters[item].gpu_passthrough | length > 0
@@ -263,8 +318,8 @@
             snoclusters[item].gpu_passthrough | length > 0
       register: amd_gpu_ready
       until: amd_gpu_ready is not failed
-      retries: 60
-      delay: 10
+      retries: 120
+      delay: 15
       changed_when: false
 
     - name: Apply AMD GPU DeviceConfig

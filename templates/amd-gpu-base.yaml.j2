@@ -9,9 +9,7 @@ kind: OperatorGroup
 metadata:
   name: openshift-amd-gpu
   namespace: openshift-amd-gpu
-spec:
-  targetNamespaces:
-    - openshift-amd-gpu
+spec: {}
 ---
 apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
@@ -19,7 +17,7 @@ metadata:
   name: amd-gpu-operator
   namespace: openshift-amd-gpu
 spec:
-  channel: stable
+  channel: alpha
   name: amd-gpu-operator
   source: cs-certified-operator-index-v4-20
   sourceNamespace: openshift-marketplace
