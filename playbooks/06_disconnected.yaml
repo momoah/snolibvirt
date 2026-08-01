@@ -50,7 +50,7 @@
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
         # Check each catalog source reaches READY state
-        for cs in redhat-operators cs-certified-operator-index-v4-20 cs-community-operator-index-v4-20; do
+        for cs in $(oc get catalogsource -n openshift-marketplace | grep operator | awk '{print $1}'); do
           STATE=$({{ myworkdir }}/oc get catalogsource $cs -n openshift-marketplace \
             -o jsonpath='{.status.connectionState.lastObservedState}' 2>/dev/null || echo "MISSING")
           if [ "$STATE" != "READY" ]; then
