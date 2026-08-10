@@ -31,13 +31,17 @@ ipsec_enabled: false
 # sudo cp ~/quay-certs.pem /etc/pki/ca-trust/source/anchors/
 # sudo update-ca-trust
 additional_trust_bundles: "{{ lookup('file','~/quay-certs.pem') }}"
+catalogs:
+  - redhat-operator-index
+  - community-operator-index
+  - certified-operator-index
 
 ###################### SNO Details ########################
 
 GENERAL_VERSION: "4.21"
 
   #OCP_VERSION: "stable-4.16"
-OCP_VERSION: "4.21.19"
+OCP_VERSION: "4.21.25"
 OCP_ARCH: x86_64
 
 # List of clusters to iterate, comment out what you don't need.
@@ -75,6 +79,10 @@ snoclusters:
     gpu_passthrough:
       - "0000:23:00.0"   # RX 6600 VGA
       #      - "0000:23:00.1"   # HDMI/DP Audio # This seems to cause issues and puts the VM into suspend state.
+    internal_registry: true
+    registry_size: 20Gi
+    registry_sc: lvms-vg1
+    registry_route: true
   sno2:
     ip: 192.168.1.232
     clusterNetwork: "12.128.0.0/14"

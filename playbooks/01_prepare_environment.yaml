@@ -22,10 +22,10 @@
 
       - name: Create workdir
         ansible.builtin.file:
-          path: "{{ myworkdir }}/{{ item }}/ocp"
+          path: "{{ myworkdir }}/{{ item[0] }}/ocp/{{ item[1] }}"
           state: directory
           mode: '755'
-        loop: "{{ snos }}"
+        loop: "{{ snos | product(['', 'openshift']) | list }}"
 
       - name: Populate and copy install-config.yaml.bak (as a backup)
         ansible.builtin.template:
@@ -37,6 +37,18 @@
         ansible.builtin.template: 
           src: ../templates/install-config-sno.yaml.j2
           dest: "{{ myworkdir }}/{{ item }}/ocp/install-config.yaml"
+        loop: "{{ snos }}"
+
+      - name: Populate and copy agent-config.yaml (as a backup)
+        ansible.builtin.template:
+          src: ../templates/agent-config-sno.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/agent-config.yaml.bak"
+        loop: "{{ snos }}"
+
+      - name: Populate and copy agent-config.yaml
+        ansible.builtin.template:
+          src: ../templates/agent-config-sno.yaml.j2
+          dest: "{{ myworkdir }}/{{ item }}/ocp/agent-config.yaml"
         loop: "{{ snos }}"
 
       - name: Copy htpasswd files
@@ -87,18 +99,3 @@
           src: "{{ myworkdir }}/openshift-install-linux.tar.gz"
           dest: "{{ myworkdir }}/"
 
-      - name: Capture ISO_URL using shell
-        ansible.builtin.shell: |
-          #{{ myworkdir }}/openshift-install coreos print-stream-json | grep location | grep {{ OCP_ARCH }} | grep iso | cut -d\" -f4
-          {{ myworkdir }}/openshift-install coreos print-stream-json | jq -r .architectures.{{ OCP_ARCH }}.artifacts.metal.formats.iso.disk.location
-        register: ISO_URL_OUTPUT
-
-      - name: Set RHCOS_ISO_URL variable
-        ansible.builtin.set_fact:
-          RHCOS_ISO_URL: "{{ ISO_URL_OUTPUT.stdout_lines | first }}"
-
-      - name: Download rhcos-live.iso for {{ OCP_ARCH }} and {{ OCP_VERSION }}
-        ansible.builtin.get_url:
-          url: "{{ RHCOS_ISO_URL }}"
-          dest: "{{ myworkdir }}/rhcos-live.iso" 
-          validate_certs: false

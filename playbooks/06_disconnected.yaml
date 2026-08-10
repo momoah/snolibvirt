@@ -18,27 +18,53 @@
       register: operatorhub_patch
       changed_when: "'no change' not in operatorhub_patch.stdout"
 
-    - name: Apply ImageDigestMirrorSet and ImageTagMirrorSet
+    - name: Apply ImageDigestMirrorSets
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/idms-oc-mirror.yaml 
-        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/itms-oc-mirror.yaml 
+        for f in {{ myworkdir }}/disconnected/idms-oc-mirror*.yaml; do
+          {{ myworkdir }}/oc apply -f "$f"
+        done
       with_items: "{{ snos }}"
       when: disconnected
-      register: mirror_sets
-      until: mirror_sets is not failed
+      register: idms_apply
+      until: idms_apply is not failed
       retries: 10
       delay: 10
+
+    - name: Check for ImageTagMirrorSet
+      ansible.builtin.stat:
+        path: "{{ myworkdir }}/disconnected/itms-oc-mirror.yaml"
+      register: itms_file
+      when: disconnected
+
+    - name: Apply ImageTagMirrorSet
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/itms-oc-mirror.yaml
+      with_items: "{{ snos }}"
+      when: disconnected and itms_file.stat.exists
+      register: itms_apply
+      until: itms_apply is not failed
+      retries: 10
+      delay: 10
+
+    - name: Verify CatalogSource manifests exist
+      ansible.builtin.shell: |
+        ls {{ myworkdir }}/disconnected/cs-{{ item[1] }}*.yaml
+      loop: "{{ snos | product(catalogs) | list }}"
+      when: disconnected
+      changed_when: false
 
     - name: Apply CatalogSources
       ansible.builtin.shell: |
         set -e -o pipefail
-        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-redhat-operator-index*.yaml
-        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-certified-operator-index*.yaml
-        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-community-operator-index*.yaml
-      with_items: "{{ snos }}"
+        export KUBECONFIG="{{ myworkdir }}/{{ item[0] }}/ocp/auth/kubeconfig"
+        {{ myworkdir }}/oc apply -f {{ myworkdir }}/disconnected/cs-{{ item[1] }}*.yaml
+      loop: "{{ snos | product(catalogs) | list }}"
+      loop_control:
+        label: "{{ item[0] }} / {{ item[1] }}"
       when: disconnected
       register: catalogsources
       until: catalogsources is not failed
@@ -49,20 +75,21 @@
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        # Check each catalog source reaches READY state
-        for cs in $(oc get catalogsource -n openshift-marketplace | grep operator | awk '{print $1}'); do
-          STATE=$({{ myworkdir }}/oc get catalogsource $cs -n openshift-marketplace \
-            -o jsonpath='{.status.connectionState.lastObservedState}' 2>/dev/null || echo "MISSING")
+        NOTREADY=0
+        for cs in $({{ myworkdir }}/oc get catalogsource -n openshift-marketplace -o name); do
+          STATE=$({{ myworkdir }}/oc get $cs -n openshift-marketplace \
+            -o jsonpath='{.status.connectionState.lastObservedState}' 2>/dev/null || echo MISSING)
           if [ "$STATE" != "READY" ]; then
-            echo "CatalogSource $cs is $STATE (expected READY)"
-            exit 1
+            echo "$cs is ${STATE:-EMPTY}"
+            NOTREADY=1
           fi
         done
-        echo "All CatalogSources ready"
+        [ "$NOTREADY" -eq 0 ] && echo "All CatalogSources ready"
+        exit $NOTREADY
       with_items: "{{ snos }}"
       when: disconnected
       register: catalogsource_ready
       until: catalogsource_ready is not failed
-      retries: 60
+      retries: 30
       delay: 10
       changed_when: false

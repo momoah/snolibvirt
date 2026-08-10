@@ -1,0 +1,20 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  annotations:
+    createdAt: Thursday, 06-Aug-26 08:34:14 UTC
+    createdBy: oc-mirror v2
+    oc-mirror_version: 4.22.0-202606091155.p2.g41d68b1.assembly.stream.el9-41d68b1
+  name: itms-operator-redhat
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - quay.local.momolab.io:443/mirror
+    source: registry.redhat.io
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhel9
+    source: registry.redhat.io/rhel9
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift4
+    source: registry.redhat.io/openshift4

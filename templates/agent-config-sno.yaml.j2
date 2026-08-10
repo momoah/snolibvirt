@@ -1,0 +1,38 @@
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: {{ item }}
+rendezvousIP: {{ snoclusters[item].ip }}
+hosts:
+  - hostname: {{ item }}
+    role: master
+    interfaces:
+      - name: {{ vminterface }}
+        macAddress: "{{ mac_prefix }}:{{ snoclusters[item].mac_nr }}"
+    rootDeviceHints:
+      deviceName: /dev/{{ snoclusters[item].dev | basename }}
+    networkConfig:
+      interfaces:
+        - name: {{ vminterface }}
+          type: ethernet
+          state: up
+          identifier: mac-address
+          mac-address: "{{ mac_prefix }}:{{ snoclusters[item].mac_nr }}"
+          ipv4:
+            enabled: true
+            dhcp: false
+            address:
+              - ip: {{ snoclusters[item].ip }}
+                prefix-length: {{ snoclusters[item].machineNetwork.split('/')[1] }}
+          ipv6:
+            enabled: false
+      dns-resolver:
+        config:
+          server:
+            - {{ dns }}
+      routes:
+        config:
+          - destination: 0.0.0.0/0
+            next-hop-address: {{ gateway }}
+            next-hop-interface: {{ vminterface }}
+            table-id: 254

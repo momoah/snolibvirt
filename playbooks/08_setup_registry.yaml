@@ -1,0 +1,147 @@
+# Configures the internal image registry with LVMS-backed persistent storage.
+# Required before any in-cluster builds (e.g. the KMM amdgpu module build in 08).
+# Without a PVC the registry runs on emptyDir and loses content on node reboot.
+# Prerequisites: 07_setup_lvms.yaml (provides the storage class)
+---
+- name: Configure internal image registry on SNO clusters
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  vars_files:
+    - ../myvars/external_vars.yaml
+  tasks:
+
+    - name: Wait for cluster API to be reachable
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get --raw /healthz
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: api_ready
+      until: api_ready is not failed
+      retries: 60
+      delay: 15
+      changed_when: false
+
+    - name: Verify storage class exists
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get sc {{ snoclusters[item].registry_sc | default('lvms-vg1') }}
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: sc_check
+      until: sc_check is not failed
+      retries: 30
+      delay: 10
+      changed_when: false
+
+    - name: Create registry PVC
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc apply -f - << 'EOF'
+        apiVersion: v1
+        kind: PersistentVolumeClaim
+        metadata:
+          name: registry-pvc
+          namespace: openshift-image-registry
+        spec:
+          accessModes: [ "ReadWriteOnce" ]
+          resources:
+            requests:
+              storage: {{ snoclusters[item].registry_size | default('30Gi') }}
+          storageClassName: {{ snoclusters[item].registry_sc | default('lvms-vg1') }}
+        EOF
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: pvc_create
+      changed_when: "'created' in pvc_create.stdout"
+
+    - name: Configure registry to use the PVC
+      # Recreate strategy is required — RWO volumes cannot be attached to two
+      # pods at once, so a rolling update would deadlock on SNO.
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc patch configs.imageregistry.operator.openshift.io/cluster --type=merge -p '
+        {
+          "spec": {
+            "managementState": "Managed",
+            "replicas": 1,
+            "rolloutStrategy": "Recreate",
+            "defaultRoute": {{ snoclusters[item].registry_route | default(true) | lower }},
+            "storage": { "pvc": { "claim": "registry-pvc" } }
+          }
+        }'
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: registry_patch
+      changed_when: "'patched' in registry_patch.stdout"
+
+    - name: Wait for registry PVC to bind and operator to settle
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        PHASE=$("{{ myworkdir }}"/oc get pvc registry-pvc -n openshift-image-registry \
+          -o jsonpath='{.status.phase}')
+        AVAIL=$("{{ myworkdir }}"/oc get co image-registry \
+          -o jsonpath='{.status.conditions[?(@.type=="Available")].status}')
+        PROG=$("{{ myworkdir }}"/oc get co image-registry \
+          -o jsonpath='{.status.conditions[?(@.type=="Progressing")].status}')
+        echo "pvc=$PHASE available=$AVAIL progressing=$PROG"
+        [ "$PHASE" = "Bound" ] && [ "$AVAIL" = "True" ] && [ "$PROG" = "False" ]
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: registry_ready
+      until: registry_ready is not failed
+      retries: 40
+      delay: 15
+      changed_when: false
+
+    - name: Wait for registry PVC to bind and operator to settle
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        PHASE=$("{{ myworkdir }}"/oc get pvc registry-pvc -n openshift-image-registry \
+          -o jsonpath='{.status.phase}')
+        AVAIL=$("{{ myworkdir }}"/oc get co image-registry \
+          -o jsonpath='{.status.conditions[?(@.type=="Available")].status}')
+        PROG=$("{{ myworkdir }}"/oc get co image-registry \
+          -o jsonpath='{.status.conditions[?(@.type=="Progressing")].status}')
+        echo "pvc=$PHASE available=$AVAIL progressing=$PROG"
+        [ "$PHASE" = "Bound" ] && [ "$AVAIL" = "True" ] && [ "$PROG" = "False" ]
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: registry_ready
+      until: registry_ready is not failed
+      retries: 40
+      delay: 15
+      changed_when: false
+
+    - name: Report registry route
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get route default-route -n openshift-image-registry \
+          -o jsonpath='{.spec.host}' 2>/dev/null || echo "no default route configured"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].internal_registry is defined and
+            snoclusters[item].internal_registry
+      register: registry_route
+      changed_when: false
+
+    - name: Show registry route
+      ansible.builtin.debug:
+        msg: "Registry for {{ item.item }}: {{ item.stdout }}"
+      with_items: "{{ registry_route.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: item.stdout is defined

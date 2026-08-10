@@ -1,0 +1,17 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  annotations:
+    createdAt: Monday, 10-Aug-26 04:43:52 UTC
+    createdBy: oc-mirror v2
+    oc-mirror_version: 4.22.0-202606091155.p2.g41d68b1.assembly.stream.el9-41d68b1
+  name: idms-release-platform
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift/release
+    source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift/release-images
+    source: quay.io/openshift-release-dev/ocp-release

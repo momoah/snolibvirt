@@ -16,13 +16,15 @@
     - ../myvars/external_vars.yaml
 
   tasks:
+    
     - name: Attach devices for each SNO VM
       ansible.builtin.include_tasks: 04_attach_gpu_inner.yaml
       with_items: "{{ snos }}"
       loop_control:
         loop_var: sno_name
-      when: snoclusters[sno_name].gpu_passthrough is defined and
-            snoclusters[sno_name].gpu_passthrough | length > 0
+      when: 
+        - snoclusters[sno_name].gpu_passthrough is defined
+        - snoclusters[sno_name].gpu_passthrough | length > 0
 
     # Virsh destroy sounds alarming, but it just means "power off", needed to allow GPU to take effect.
     # We check if the domain is running first — on a re-run it may already be shut off.
@@ -32,11 +34,72 @@
       with_items: "{{ snos }}"
       loop_control:
         loop_var: sno_name
-      when: snoclusters[sno_name].gpu_passthrough is defined and
-            snoclusters[sno_name].gpu_passthrough | length > 0
+      when: 
+        - snoclusters[sno_name].gpu_passthrough is defined
+        - snoclusters[sno_name].gpu_passthrough | length > 0
       become: true
       register: domain_state
       changed_when: false
+
+    - name: Check if hostdev already attached to running domain
+      ansible.builtin.shell: |
+        virsh -c qemu:///system dumpxml "{{ sno_name }}" | grep -c "hostdev" || true
+      with_items: "{{ snos }}"
+      loop_control:
+        loop_var: sno_name
+      become: true
+      register: hostdev_present
+      changed_when: false
+      when:
+        - snoclusters[sno_name].gpu_passthrough is defined 
+        - snoclusters[sno_name].gpu_passthrough | length > 0
+
+    - name: Check GPU PCI config space is readable
+      ansible.builtin.shell: |
+        for dev in {{ snoclusters[sno_name].gpu_passthrough | join(' ') }}; do
+          HDR=$(setpci -s "${dev#0000:}" 0e.b 2>/dev/null || echo ff)
+          echo "$dev $HDR"
+        done
+      with_items: "{{ snos }}"
+      loop_control:
+        loop_var: sno_name
+      when:
+        - snoclusters[sno_name].gpu_passthrough is defined
+        - snoclusters[sno_name].gpu_passthrough | length > 0
+      become: true
+      register: gpu_hdr
+      changed_when: false
+
+    - name: Fail with reboot instructions if GPU config space is 0xFF
+      ansible.builtin.fail:
+        msg: |
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+          GPU STUCK ON PCI BUS — HOST REBOOT REQUIRED
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+          PCI config space for the GPU on {{ item.sno_name }} reads 0xFF, which
+          means the card is stuck from a previous VM session. libvirt cannot
+          initialise it and will fail with:
+
+            Unknown PCI header type '127'
+
+          Device status:
+          {{ item.stdout | trim }}
+
+          RESOLUTION — reboot the host:
+
+            sudo virsh destroy {{ item.sno_name }}     # if still running
+            sudo reboot
+
+          After the host comes back:
+
+            ansible-playbook playbooks/04_attach_gpu_passthrough.yaml
+
+          ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      when: "'ff' in item.stdout"
+      with_items: "{{ gpu_hdr.results }}"
+      loop_control:
+        label: "{{ item.sno_name }}"
 
     - name: Shut down running libvirt domains with GPU passthrough configured
       ansible.builtin.shell: |
@@ -48,6 +111,7 @@
         - snoclusters[sno_name].gpu_passthrough is defined
         - snoclusters[sno_name].gpu_passthrough | length > 0
         - domain_state.results | selectattr('sno_name', 'equalto', sno_name) | map(attribute='stdout') | first | trim in ['running', 'paused']
+        - (hostdev_present.results | selectattr('sno_name', 'equalto', sno_name) | map(attribute='stdout') | first | trim | int) == 0
       become: true
 
     - name: Start libvirt domains with GPU passthrough configured
@@ -56,6 +120,8 @@
       with_items: "{{ snos }}"
       loop_control:
         loop_var: sno_name
-      when: snoclusters[sno_name].gpu_passthrough is defined and
-            snoclusters[sno_name].gpu_passthrough | length > 0
+      when: 
+        - snoclusters[sno_name].gpu_passthrough is defined
+        - snoclusters[sno_name].gpu_passthrough | length > 0
+        - domain_state.results | selectattr('sno_name', 'equalto', sno_name) | map(attribute='stdout') | first | trim != 'running'
       become: true

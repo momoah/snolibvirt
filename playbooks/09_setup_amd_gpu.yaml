@@ -19,13 +19,25 @@
     - ../myvars/external_vars.yaml
   tasks:
 
+    - name: Wait for cluster API to be reachable
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get --raw /healthz
+      with_items: "{{ snos }}"
+      register: api_ready
+      until: api_ready is not failed
+      retries: 60
+      delay: 15
+      changed_when: false
+
     # ── GPU Health Check ─────────────────────────────────────────────────────
 
     - name: Check GPU initialization status on node
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        "{{ myworkdir }}"/oc debug node/{{ item }}.{{ domain }} \
+        "{{ myworkdir }}"/oc debug node/{{ item }} \
           -- chroot /host dmesg 2>/dev/null | grep -i "amdgpu.*probe.*failed\|Fatal error during GPU init" || echo "GPU_OK"
       with_items: "{{ snos }}"
       when: snoclusters[item].gpu_passthrough is defined and
@@ -68,7 +80,7 @@
         - snoclusters[item.item].gpu_passthrough is defined
         - snoclusters[item.item].gpu_passthrough | length > 0
         - "'GPU_OK' not in item.stdout"
-        - "'probe.*failed' in item.stdout or 'Fatal error' in item.stdout"
+        - item.stdout is search('probe.*failed') or item.stdout is search('Fatal error')
       with_items: "{{ gpu_health.results }}"
       loop_control:
         label: "{{ item.item }}"
@@ -171,12 +183,29 @@
       register: mc_runpm
       changed_when: "'configured' in mc_runpm.stdout or 'created' in mc_runpm.stdout"
 
+    - name: Give MCO time to observe the new MachineConfigs
+      ansible.builtin.pause:
+        seconds: 60
+      when: mc_modprobe is changed or mc_runpm is changed
+
     - name: Wait for MachineConfigPool to finish applying modprobe + runpm configs
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        "{{ myworkdir }}"/oc get mcp master \
-          -o jsonpath='{.status.conditions[?(@.type=="Updated")].status}' | grep -w True
+        UPDATED=$("{{ myworkdir }}"/oc get mcp master \
+          -o jsonpath='{.status.conditions[?(@.type=="Updated")].status}')
+        UPDATING=$("{{ myworkdir }}"/oc get mcp master \
+          -o jsonpath='{.status.conditions[?(@.type=="Updating")].status}')
+        DEGRADED=$("{{ myworkdir }}"/oc get mcp master \
+          -o jsonpath='{.status.conditions[?(@.type=="Degraded")].status}')
+        DESIRED=$("{{ myworkdir }}"/oc get node -o jsonpath='{.items[0].metadata.annotations.machineconfiguration\.openshift\.io/desiredConfig}')
+        CURRENT=$("{{ myworkdir }}"/oc get node -o jsonpath='{.items[0].metadata.annotations.machineconfiguration\.openshift\.io/currentConfig}')
+        STATE=$("{{ myworkdir }}"/oc get node -o jsonpath='{.items[0].metadata.annotations.machineconfiguration\.openshift\.io/state}')
+        echo "updated=$UPDATED updating=$UPDATING degraded=$DEGRADED state=$STATE"
+        echo "desired=$DESIRED current=$CURRENT"
+        [ "$DEGRADED" = "True" ] && { echo "MCP DEGRADED"; exit 2; }
+        [ "$UPDATED" = "True" ] && [ "$UPDATING" = "False" ] && \
+          [ "$DESIRED" = "$CURRENT" ] && [ "$STATE" = "Done" ]
       with_items: "{{ snos }}"
       when: snoclusters[item].gpu_passthrough is defined and
             snoclusters[item].gpu_passthrough | length > 0
@@ -184,7 +213,20 @@
       until: mcp_modprobe is not failed
       retries: 80
       delay: 30
-      changed_when: false
+      changed_when: false      
+
+    - name: Wait for cluster API after MachineConfig reboot
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        "{{ myworkdir }}"/oc get --raw /healthz
+      with_items: "{{ snos }}"
+      register: api_ready_post_mc
+      until: api_ready_post_mc is not failed
+      retries: 60
+      delay: 15
+      changed_when: false      
+
 
     # ── NFD ──────────────────────────────────────────────────────────────────
 
@@ -334,32 +376,32 @@
       changed_when: false
 
     - name: Wait for amdgpu kernel module build to complete
-      # KMM compiles amdgpu-dkms from AMD's repo inside the cluster.
-      # This typically takes 10-30 minutes depending on available CPU.
-      # On re-runs the build may already be complete and cleaned up —
-      # so we also accept the case where no builds exist but the module
-      # image is already present in the internal registry (istag exists).
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        BUILD_PHASE=$("{{ myworkdir }}"/oc get builds -n openshift-amd-gpu \
-          -o jsonpath='{.items[*].status.phase}' 2>/dev/null || echo "")
-        if echo "${BUILD_PHASE}" | grep -qw Succeeded; then
-          echo "build succeeded"
-          exit 0
+        BUILD=$("{{ myworkdir }}"/oc get builds -n openshift-amd-gpu \
+          -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "")
+        if [ -n "${BUILD}" ]; then
+          PHASE=$("{{ myworkdir }}"/oc get build "${BUILD}" -n openshift-amd-gpu \
+            -o jsonpath='{.status.phase}')
+          REASON=$("{{ myworkdir }}"/oc get build "${BUILD}" -n openshift-amd-gpu \
+            -o jsonpath='{.status.reason}')
+          echo "build ${BUILD} phase=${PHASE} reason=${REASON}"
+          case "${PHASE}" in
+            Complete)  exit 0 ;;
+            Failed|Error|Cancelled)
+              echo "BUILD FAILED — will not recover by waiting. Reason: ${REASON}"
+              exit 2 ;;
+            *) exit 1 ;;
+          esac
         fi
-        if echo "${BUILD_PHASE}" | grep -qw Running; then
-          echo "build still running"
-          exit 1
-        fi
-        # No builds running — check if module image already exists in registry
-        "{{ myworkdir }}"/oc get istag -n openshift-amd-gpu \
-          --no-headers 2>/dev/null | grep amdgpu_kmod | grep -v "^$"
+        "{{ myworkdir }}"/oc get istag -n openshift-amd-gpu --no-headers 2>/dev/null | grep amdgpu_kmod
       with_items: "{{ snos }}"
       when: snoclusters[item].gpu_passthrough is defined and
             snoclusters[item].gpu_passthrough | length > 0
       register: amd_gpu_build
-      until: amd_gpu_build is not failed
+      until: amd_gpu_build is not failed or amd_gpu_build.rc == 2
+      failed_when: amd_gpu_build.rc == 2
       retries: 60
       delay: 30
       changed_when: false
@@ -368,7 +410,7 @@
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        "{{ myworkdir }}"/oc debug node/{{ item }}.{{ domain }} \
+        "{{ myworkdir }}"/oc debug node/{{ item }} \
           -- chroot /host lsmod 2>/dev/null | grep -w amdgpu
       with_items: "{{ snos }}"
       when: snoclusters[item].gpu_passthrough is defined and
@@ -377,6 +419,24 @@
       until: amdgpu_module is not failed
       retries: 40
       delay: 30
+      changed_when: false
+
+    - name: Verify amdgpu probe succeeded
+      ansible.builtin.shell: |
+        set -e -o pipefail
+        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
+        OUT=$("{{ myworkdir }}"/oc debug node/{{ item }} \
+          -- chroot /host dmesg 2>/dev/null | grep -iE "amdgpu.*probe.*failed|Fatal error during GPU init|mode1 reset failed" || true)
+        if [ -n "${OUT}" ]; then
+          echo "${OUT}"
+          exit 2
+        fi
+        echo "amdgpu probe OK"
+      with_items: "{{ snos }}"
+      when: snoclusters[item].gpu_passthrough is defined and
+            snoclusters[item].gpu_passthrough | length > 0
+      register: amdgpu_probe
+      failed_when: amdgpu_probe.rc == 2
       changed_when: false
 
     - name: Wait for GPU resource to be available on node

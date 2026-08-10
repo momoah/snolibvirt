@@ -1,0 +1,166 @@
+# Used https://access.redhat.com/labs/ocpupgradegraph/update_path/
+
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v2alpha1
+archiveSize: 12 
+mirror:
+  operators:
+    # Red Hat Operators Catalog v4.21
+    - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.21
+      packages:
+      # Kernel module management
+      - name: kernel-module-management
+      # External Secrets Operator
+      - name: openshift-external-secrets-operator
+        channels:
+          - name: stable-v1
+      - name: nmstate-operator
+        channels: 
+          - name: stable
+      - name: kubernetes-nmstate-operator
+        channels:
+          - name: stable
+      # OpenShift AI/Data Science
+      #- name: rhods-operator
+      #  channels:
+      #    - name: stable
+
+      #- name: openshift-pipelines-operator-rh
+      #  channels:
+      #    - name: latest
+      - name: serverless-operator
+        channels:
+          - name: stable
+      - name: servicemeshoperator
+        channels:
+          - name: stable
+      # OpenShift Advanced Data Protection
+      - name: redhat-oadp-operator
+        channels:
+          - name: stable
+      # Advanced Cluster Management for Kubernetes
+      - name: advanced-cluster-management
+        channels:
+          - name: release-2.17
+
+      - name: multicluster-engine
+        channels:
+          - name: stable-2.17
+
+      # Node Feature Discovery Operatr
+      - name: nfd
+
+      # Advanced Cluster Security for Kubernetes
+      - name: rhacs-operator
+        channels:
+          - name: stable
+
+      # Quay
+      - name: quay-operator
+      - name: quay-bridge-operator
+      - name: container-security-operator
+
+      # Data Foundation
+      # https://docs.redhat.com/en/documentation/red_hat_openshift_data_foundation/4.20/html/planning_your_deployment/disconnected-environment_rhodf
+      - name: ocs-operator
+      - name: odf-operator
+      - name: mcg-operator
+      - name: odf-csi-addons-operator
+      - name: ocs-client-operator
+      - name: odf-prometheus-operator
+      - name: recipe
+      - name: rook-ceph-operator
+      - name: cephcsi-operator
+      - name: odf-dependencies
+      - name: odf-external-snapshotter-operator
+      - name: odf-multicluster-orchestrator
+      - name: odr-cluster-operator
+      - name: odr-hub-operator
+
+      # Local Storage Operator
+      - name: lvms-operator
+      - name: local-storage-operator
+
+      # Dev Tooling
+      - name: web-terminal
+      - name: devworkspace-operator
+      - name: devspaces
+
+      # Update Service
+      - name: cincinnati-operator
+        channels:
+          - name: v1
+
+      # Pipelines
+      - name: openshift-pipelines-operator-rh
+        channels:
+          - name: latest
+
+      # GitOps
+      - name: openshift-gitops-operator
+        channels:
+          - name: latest
+
+      # Virt
+      - name: kubevirt-hyperconverged
+        channels:
+          - name: stable
+      - name: mtv-operator
+
+      # Compliance Operator
+      - name: compliance-operator
+        channels:
+          - name: stable
+
+      # File Integrity Operator
+      - name: file-integrity-operator
+        channels:
+          - name: stable
+
+      # Ansible Automation Platform Operator
+      - name: ansible-automation-platform-operator
+        channels:
+          - name: stable-2.7
+          - name: stable-2.6
+
+      # MetalLB Operator
+      - name: metallb-operator
+        channels:
+          - name: stable
+
+      # PTP Operator
+      - name: ptp-operator
+        channels:
+          - name: stable
+
+      # Openshift Logging
+      - name: cluster-logging
+        #channels:
+        #  - name: stable-6.4
+
+      - name: loki-operator
+        #channels:
+        #  - name: stable-6.4
+
+      # Cluster Observablility Operator
+      - name: cluster-observability-operator
+        channels:
+          - name: stable
+
+      # Network Observablility Operator
+      - name: netobserv-operator
+        channels:
+          - name: stable
+
+      # Keycloak Operator
+      - name: rhbk-operator
+        channels:
+          - name: stable-v26.6
+          - name: stable-v26.5
+          - name: stable-v26.4
+
+      # Cert Manager
+      - name: openshift-cert-manager-operator
+        channels:
+          - name: stable-v1
+

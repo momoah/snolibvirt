@@ -1,0 +1,16 @@
+# Used https://access.redhat.com/labs/ocpupgradegraph/update_path/
+
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v2alpha1
+archiveSize: 12 
+mirror:
+  operators:
+    # Community Operators Catalog
+    - catalog: registry.redhat.io/redhat/community-operator-index:v4.21
+      packages:
+
+      # MariaDB Operator
+      - name: mariadb-operator
+
+      # GroupSync Operator
+      - name: group-sync-operator

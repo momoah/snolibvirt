@@ -2,7 +2,11 @@ apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
   name: 99-openshift-machineconfig-kargs
+  labels:
+    machineconfiguration.openshift.io/role: master
 spec:
+  config:
+    ignition:
+      version: 3.2.0
   kernelArguments:
     - mitigations=off
-    - selinux=0

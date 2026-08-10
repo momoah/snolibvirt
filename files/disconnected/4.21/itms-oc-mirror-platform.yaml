@@ -1,0 +1,52 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  annotations:
+    createdAt: Monday, 10-Aug-26 04:43:52 UTC
+    createdBy: oc-mirror v2
+    oc-mirror_version: 4.22.0-202606091155.p2.g41d68b1.assembly.stream.el9-41d68b1
+  name: itms-release-platform
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift/release-images
+    source: quay.io/openshift-release-dev/ocp-release
+---
+apiVersion: config.openshift.io/v1
+kind: ImageTagMirrorSet
+metadata:
+  annotations:
+    createdAt: Monday, 10-Aug-26 04:43:52 UTC
+    createdBy: oc-mirror v2
+    oc-mirror_version: 4.22.0-202606091155.p2.g41d68b1.assembly.stream.el9-41d68b1
+  name: itms-generic-0
+spec:
+  imageTagMirrors:
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhel9
+    source: registry.redhat.io/rhel9
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/openshift4
+    source: registry.redhat.io/openshift4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/ubi8
+    source: registry.redhat.io/ubi8
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/jenkins
+    source: docker.io/jenkins
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/modh
+    source: quay.io/modh
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/odf4
+    source: registry.redhat.io/odf4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/ubi9
+    source: registry.redhat.io/ubi9
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/container-native-virtualization
+    source: registry.redhat.io/container-native-virtualization
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rhel8
+    source: registry.redhat.io/rhel8

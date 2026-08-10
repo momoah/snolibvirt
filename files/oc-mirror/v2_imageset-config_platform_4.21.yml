@@ -1,0 +1,28 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v2alpha1
+archiveSize: 12
+mirror:
+  platform:
+    channels:
+      - name: stable-4.21
+        type: ocp
+        minVersion: 4.21.25
+        maxVersion: 4.21.25
+    graph: true
+  additionalImages:
+  - name: registry.redhat.io/rhel9/support-tools:latest
+  - name: registry.redhat.io/rhel8/rhel-guest-image:latest
+  - name: registry.redhat.io/rhel9/rhel-guest-image:latest
+  - name: registry.redhat.io/openshift4/ose-must-gather:latest
+  - name: registry.redhat.io/openshift4/ose-cli:latest
+  - name: registry.redhat.io/ubi8/ubi:latest
+  - name: registry.redhat.io/ubi9/ubi:latest
+  - name: registry.redhat.io/ubi9/ubi-minimal:latest
+  - name: registry.redhat.io/ubi9/httpd-24:latest
+  - name: registry.redhat.io/ubi9/python-311:latest
+  - name: registry.redhat.io/rhel9/postgresql-15:latest
+  - name: registry.redhat.io/rhel9/postgresql-16:latest
+  - name: registry.redhat.io/odf4/odf-must-gather-rhel9:v4.18
+  - name: registry.redhat.io/container-native-virtualization/cnv-must-gather-rhel9:v4.21
+  - name: docker.io/jenkins/jenkins:latest
+  - name: quay.io/modh/vllm:rhoai-2.14-linux-extra-fast-amd64

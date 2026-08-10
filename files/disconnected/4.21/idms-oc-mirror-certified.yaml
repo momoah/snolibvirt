@@ -1,0 +1,53 @@
+---
+apiVersion: config.openshift.io/v1
+kind: ImageDigestMirrorSet
+metadata:
+  annotations:
+    createdAt: Thursday, 06-Aug-26 08:43:09 UTC
+    createdBy: oc-mirror v2
+    oc-mirror_version: 4.22.0-202606091155.p2.g41d68b1.assembly.stream.el9-41d68b1
+  name: idms-operator-certified
+spec:
+  imageDigestMirrors:
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/sig-storage
+    source: registry.k8s.io/sig-storage
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
+    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator/openshift4
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/redhat-cop
+    source: quay.io/redhat-cop
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/cloud-native
+    source: registry.gitlab.com/gitlab-org/cloud-native
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab
+    source: registry.connect.redhat.com/gitlab
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/nginx
+    source: registry.connect.redhat.com/nginx
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/community-operator-pipeline-prod
+    source: quay.io/community-operator-pipeline-prod
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/nutanix
+    source: registry.connect.redhat.com/nutanix
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/brancz
+    source: quay.io/brancz
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/rocm
+    source: docker.io/rocm
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/ci-cd/gitlab-runner-ubi-images
+    source: registry.gitlab.com/gitlab-org/ci-cd/gitlab-runner-ubi-images
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/gitlab-org/gl-openshift/gitlab-runner-operator
+    source: registry.gitlab.com/gitlab-org/gl-openshift/gitlab-runner-operator
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/amd
+    source: registry.connect.redhat.com/amd
+  - mirrors:
+    - quay.local.momolab.io:443/mirror/nginx
+    source: quay.io/nginx

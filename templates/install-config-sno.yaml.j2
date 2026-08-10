@@ -19,9 +19,6 @@ networking:
   - {{ snoclusters[item].serviceNetwork }}
 platform:
   none: {}
-bootstrapInPlace:
-  installationDisk: /dev/vda
-#  installationDisk: /dev/disk/by-id/wwn-{{ snoclusters[item].wwn }} # Trying virtio which doesn't support wwn
 {% if disconnected %}
 pullSecret: '{{ mydiscopullsecret | to_json }}'
 {% else %}
@@ -35,12 +32,12 @@ additionalTrustBundle: |
 # /data/oc-mirror/workdir/working-dir/cluster-resources/itms-oc-mirror.yaml 
 # after running oc-mirror v2:
 # oc-mirror --v2 -c imageset-config-ocmirrorv2-v4.16.yaml  --workspace file:////data/oc-mirror/workdir/   docker://registry.local.momolab.io:8443/mirror
-imageContentSources:
-# Get from cluster-resources/idms-oc-mirror.yaml
+imageDigestSources:
   - mirrors:
     - quay.local.momolab.io:443/mirror/openshift/release
     source: quay.io/openshift-release-dev/ocp-v4.0-art-dev
   - mirrors:
     - quay.local.momolab.io:443/mirror/openshift/release-images
     source: quay.io/openshift-release-dev/ocp-release
+# Get from cluster-resources/idms-oc-mirror.yaml
 {% endif %}

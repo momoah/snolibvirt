@@ -2,7 +2,7 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: CatalogSource
 metadata:
   annotations:
-    createdAt: Friday, 31-Jul-26 07:00:03 UTC
+    createdAt: Thursday, 06-Aug-26 08:43:09 UTC
     createdBy: oc-mirror v2
     oc-mirror_version: 4.22.0-202606091155.p2.g41d68b1.assembly.stream.el9-41d68b1
   name: cs-certified-operator-index-v4-21
