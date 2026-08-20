@@ -47,7 +47,7 @@ OCP_ARCH: x86_64
 # List of clusters to iterate, comment out what you don't need.
 snos:
   - sno1 
-    #  - sno2
+  - sno2
     #  - sno3
 
 # Below can be used in combination with {{ snos }} and {{ snoclusters[item].cpus }}
@@ -69,15 +69,15 @@ snoclusters:
     mac_nr: 66
     sshKey: "{{ mysshkey }}"
     vcpus: 32
-    ram: 204800 #131072 #204800
+    ram: 131072 #131072 #204800
     disk: 128
     disk2: 128
     ssl_key: "{{ lookup('file','~/apps.sno1.local.momolab.io/key.pem') }}" 
     ssl_cert: "{{ lookup('file','~/apps.sno1.local.momolab.io/cert.pem') }}" 
     ssl_chain: "{{ lookup('file','~/apps.sno1.local.momolab.io/fullchain.pem') }}" 
     # Find out how we identified the numbers below via files/amd_gpu_passthrough_fedora_epyc.md
-    gpu_passthrough:
-      - "0000:23:00.0"   # RX 6600 VGA
+    #gpu_passthrough:
+    #  - "0000:23:00.0"   # RX 6600 VGA
       #      - "0000:23:00.1"   # HDMI/DP Audio # This seems to cause issues and puts the VM into suspend state.
     internal_registry: true
     registry_size: 20Gi
@@ -100,10 +100,17 @@ snoclusters:
     mac_nr: 67
     sshKey: "{{ mysshkey }}"
     vcpus: 12
-    ram: 65536 
+    ram: 98304 #65536 #131072
     disk: 128
     disk2: 128
+    ssl_key: "{{ lookup('file','~/apps.sno2.local.momolab.io/key.pem') }}"
+    ssl_cert: "{{ lookup('file','~/apps.sno2.local.momolab.io/cert.pem') }}"
+    ssl_chain: "{{ lookup('file','~/apps.sno2.local.momolab.io/fullchain.pem') }}"
     # no gpu_passthrough key = no passthrough
+    internal_registry: true
+    registry_size: 20Gi
+    registry_sc: lvms-vg1
+    registry_route: true
   sno3:
     ip: 192.168.1.233
     clusterNetwork: "13.128.0.0/14"
@@ -125,3 +132,12 @@ snoclusters:
     disk: 128
     disk2: 30
     # no gpu_passthrough key = no passthrough
+    internal_registry: true
+    registry_size: 20Gi
+    registry_sc: lvms-vg1
+    registry_route: true
+    ssl_key: "{{ lookup('file','~/apps.sno3.local.momolab.io/key.pem') }}"
+    ssl_cert: "{{ lookup('file','~/apps.sno3.local.momolab.io/cert.pem') }}"
+    ssl_chain: "{{ lookup('file','~/apps.sno3.local.momolab.io/fullchain.pem') }}"
+
+

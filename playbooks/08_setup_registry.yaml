@@ -63,8 +63,6 @@
       changed_when: "'created' in pvc_create.stdout"
 
     - name: Configure registry to use the PVC
-      # Recreate strategy is required — RWO volumes cannot be attached to two
-      # pods at once, so a rolling update would deadlock on SNO.
       ansible.builtin.shell: |
         set -e -o pipefail
         export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
@@ -75,7 +73,10 @@
             "replicas": 1,
             "rolloutStrategy": "Recreate",
             "defaultRoute": {{ snoclusters[item].registry_route | default(true) | lower }},
-            "storage": { "pvc": { "claim": "registry-pvc" } }
+            "storage": {
+              "emptyDir": null,
+              "pvc": { "claim": "registry-pvc" }
+            }
           }
         }'
       with_items: "{{ snos }}"
@@ -83,27 +84,6 @@
             snoclusters[item].internal_registry
       register: registry_patch
       changed_when: "'patched' in registry_patch.stdout"
-
-    - name: Wait for registry PVC to bind and operator to settle
-      ansible.builtin.shell: |
-        set -e -o pipefail
-        export KUBECONFIG="{{ myworkdir }}/{{ item }}/ocp/auth/kubeconfig"
-        PHASE=$("{{ myworkdir }}"/oc get pvc registry-pvc -n openshift-image-registry \
-          -o jsonpath='{.status.phase}')
-        AVAIL=$("{{ myworkdir }}"/oc get co image-registry \
-          -o jsonpath='{.status.conditions[?(@.type=="Available")].status}')
-        PROG=$("{{ myworkdir }}"/oc get co image-registry \
-          -o jsonpath='{.status.conditions[?(@.type=="Progressing")].status}')
-        echo "pvc=$PHASE available=$AVAIL progressing=$PROG"
-        [ "$PHASE" = "Bound" ] && [ "$AVAIL" = "True" ] && [ "$PROG" = "False" ]
-      with_items: "{{ snos }}"
-      when: snoclusters[item].internal_registry is defined and
-            snoclusters[item].internal_registry
-      register: registry_ready
-      until: registry_ready is not failed
-      retries: 40
-      delay: 15
-      changed_when: false
 
     - name: Wait for registry PVC to bind and operator to settle
       ansible.builtin.shell: |
